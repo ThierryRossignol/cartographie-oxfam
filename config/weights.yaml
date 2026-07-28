@@ -1,0 +1,50 @@
+# ============================================================
+# config/weights.yaml
+# Pondérations de l'Indice de Besoin de Mobilisation (IBM)
+# et de l'Indice d'Enjeu Extrême Droite (IED)
+# Oxfam France — Observatoire Territorial de Mobilisation Citoyenne
+# ============================================================
+
+# ------------------------------------------------------------
+# IBM — Indice de Besoin de Mobilisation
+# IBM = 0,45 D + 0,40 V + 0,15 J
+# ------------------------------------------------------------
+IBM:
+  D: 0.45   # Déficit démocratique — poids fort, scrutin le plus déterminant
+  V: 0.40   # Vulnérabilité socio-économique
+  J: 0.15   # Public Prioritaire Jeunes (19-25 ans)
+
+# ------------------------------------------------------------
+# PC — Participation Chronique Pondérée (compose D)
+# PC = 0,60 A2022 + 0,25 A2017 + 0,15 A2024
+# ------------------------------------------------------------
+PC:
+  A2022: 0.60   # Abstention présidentielle 2022 — scrutin de référence pour 2027
+  A2017: 0.25   # Abstention présidentielle 2017
+  A2024: 0.15   # Abstention élections nationales 2024 (législatives/européennes)
+
+# ------------------------------------------------------------
+# V — Vulnérabilité socio-économique
+# V = 0,35 P + 0,25 C + 0,25 R + 0,15 SD
+# ------------------------------------------------------------
+V:
+  P: 0.35    # Taux de pauvreté
+  C: 0.25    # Taux de chômage
+  R: 0.25    # Revenu médian (normalisé puis inversé)
+  SD: 0.15   # Part de la population sans diplôme
+
+# ------------------------------------------------------------
+# J — Public Prioritaire Jeunes
+# J = Y (variable unique, pas de sous-pondération)
+# ------------------------------------------------------------
+J:
+  Y: 1.00   # Part des 19-25 ans dans la population
+
+# ------------------------------------------------------------
+# IED — Indice d'Enjeu Extrême Droite
+# Indépendant de l'IBM — utilisé comme filtre/couche cartographique
+# IED = 0,70 RN + 0,30 ΔRN
+# ------------------------------------------------------------
+IED:
+  RN: 0.70      # Score du RN à la présidentielle 2022
+  delta_RN: 0.30  # Progression du RN entre 2017 et 2022
