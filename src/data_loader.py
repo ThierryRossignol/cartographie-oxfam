@@ -1,17 +1,31 @@
 """
-Module de chargement des données.
+Chargement des données publiques utilisées par le projet IBM France.
 
-Responsabilités :
-- Télécharger les données depuis les différentes sources (API, fichiers, etc.).
-- Gérer le cache local des données téléchargées.
-- Charger les jeux de données bruts dans des DataFrames pandas.
-- Vérifier l'intégrité des données téléchargées.
+Ce module centralise les fonctions permettant de récupérer les données
+depuis les différentes sources (API ou fichiers locaux).
 
-Sources de données prévues :
-- API des résultats électoraux (data.gouv.fr)
-- INSEE
-- IGN
-- Autres jeux de données publics
-
-Ce module ne réalise aucun nettoyage ni transformation des données.
+Pour le moment, seule l'API des élections est prévue.
 """
+
+
+class ElectionLoader:
+    """
+    Charge les données électorales depuis l'API nationale.
+    """
+
+    def __init__(self):
+        """
+        Initialise le chargeur de données électorales.
+        """
+        self.api_url = (
+            "https://www.data.gouv.fr/api/resources/"
+            "b8703c69-a18f-46ab-9e7f-3a8368dcb891/data/csv/"
+        )
+
+    def load(self):
+        """
+        Charge les données électorales.
+
+        Cette méthode sera implémentée dans la prochaine étape.
+        """
+        raise NotImplementedError("Méthode non encore implémentée.")
