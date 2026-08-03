@@ -1,31 +1,40 @@
 """
-Chargement des données publiques utilisées par le projet IBM France.
+Chargement des données publiques du projet Cartographie Oxfam.
 
-Ce module centralise les fonctions permettant de récupérer les données
-depuis les différentes sources (API ou fichiers locaux).
-
-Pour le moment, seule l'API des élections est prévue.
+Ce module contient les classes permettant de récupérer les données
+depuis les différentes sources (API, CSV locaux...).
 """
+
+from io import StringIO
+
+import pandas as pd
+import requests
 
 
 class ElectionLoader:
     """
-    Charge les données électorales depuis l'API nationale.
+    Charge les données électorales depuis l'API Data.gouv.
     """
 
-    def __init__(self):
+    API_URL = (
+        "https://www.data.gouv.fr/api/resources/"
+        "b8703c69-a18f-46ab-9e7f-3a8368dcb891/data/csv/"
+    )
+
+    def load(self) -> pd.DataFrame:
         """
-        Initialise le chargeur de données électorales.
+        Télécharge les données électorales et les retourne sous forme
+        d'un DataFrame Pandas.
         """
-        self.api_url = (
-            "https://www.data.gouv.fr/api/resources/"
-            "b8703c69-a18f-46ab-9e7f-3a8368dcb891/data/csv/"
+
+        response = requests.get(self.API_URL, timeout=60)
+
+        response.raise_for_status()
+
+        df = pd.read_csv(
+            StringIO(response.text),
+            sep=";",
+            encoding="utf-8",
         )
 
-    def load(self):
-        """
-        Charge les données électorales.
-
-        Cette méthode sera implémentée dans la prochaine étape.
-        """
-        raise NotImplementedError("Méthode non encore implémentée.")
+        return df
