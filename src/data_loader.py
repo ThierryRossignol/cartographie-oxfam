@@ -388,5 +388,7 @@ class ContoursLoader:
         import geopandas as gpd  # import local : dépendance lourde
 
         path = CachedSource(self.urls[f"communes_{resolution}"], self.raw_dir).download()
-        # GDAL lit les fichiers gzip via le préfixe /vsigzip/.
-        return gpd.read_file(f"/vsigzip/{path}")
+        # Décompression en Python plutôt que via le préfixe GDAL /vsigzip/,
+        # peu fiable avec les chemins Windows (C:\...).
+        with gzip.open(path, "rb") as f:
+            return gpd.read_file(io.BytesIO(f.read()))

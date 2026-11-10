@@ -198,6 +198,27 @@ Responsable de :
 
 ---
 
+# Démarrage rapide
+
+Prérequis : Python 3.11 ou plus récent, Git, une connexion internet (~600 Mo de données publiques
+téléchargées au premier lancement, puis gardées dans `data/raw/`).
+
+```bash
+git clone https://github.com/ThierryRossignol/cartographie-oxfam.git
+cd cartographie-oxfam
+python -m venv .venv
+.venv\Scripts\activate          # Windows   (macOS / Linux : source .venv/bin/activate)
+python -m pip install -r requirements.txt
+python -m src.pipeline all       # téléchargements + calcul de l'IBM et de l'IED (quelques minutes)
+python -m src.pipeline cartes    # cartes PNG et carte interactive (facultatif)
+python -m streamlit run app/app.py
+```
+
+Le dashboard s'ouvre dans le navigateur à l'adresse http://localhost:8501.
+Sous macOS / Linux, les raccourcis `make install`, `make data`, `make cartes` et `make app` font la même chose.
+
+---
+
 # Utilisation
 
 ```bash
