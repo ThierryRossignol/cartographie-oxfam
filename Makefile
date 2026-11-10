@@ -1,7 +1,7 @@
 # Commandes usuelles du projet Cartographie Oxfam
 PYTHON ?= python3
 
-.PHONY: help install test app notebooks clean
+.PHONY: help install test elections app notebooks clean
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -11,6 +11,9 @@ install:  ## Installe les dépendances
 
 test:  ## Lance les tests unitaires
 	$(PYTHON) -m pytest -q
+
+elections:  ## Télécharge les résultats électoraux et calcule l'abstention par commune
+	$(PYTHON) -m src.pipeline
 
 app:  ## Lance le dashboard Streamlit
 	$(PYTHON) -m streamlit run app/app.py

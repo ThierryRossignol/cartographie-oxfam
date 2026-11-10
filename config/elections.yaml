@@ -1,0 +1,22 @@
+# ============================================================
+# config/elections.yaml
+# Scrutins utilisés pour le calcul des indicateurs.
+#
+# Les identifiants suivent le format du jeu de données
+# « Données des élections agrégées » (data.gouv.fr) :
+#   <année>_<type>_<tour>, ex. 2022_pres_t1
+#   types : pres, legi, euro, muni, regi, dpmt, cant
+#
+# Pour voir la liste complète :
+#   python -c "from src.data_loader import ElectionLoader; print(ElectionLoader().available_elections())"
+# ============================================================
+
+# ------------------------------------------------------------
+# Taux d'abstention utilisés par PC (les clés = colonnes de weights.yaml)
+# On retient le premier tour, qui mesure la participation « de base ».
+# ------------------------------------------------------------
+abstention:
+  A2022: 2022_pres_t1   # Présidentielle 2022, 1er tour
+  A2017: 2017_pres_t1   # Présidentielle 2017, 1er tour
+  A2024: 2024_legi_t1   # Législatives 2024, 1er tour
+                        # (alternative : 2024_euro_t1, participation bien plus faible)

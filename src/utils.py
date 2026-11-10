@@ -4,7 +4,7 @@ Fonctions utilitaires communes à l'ensemble du projet.
 Responsabilités :
 - Fonctions de normalisation.
 - Fonctions mathématiques communes.
-- Chargement de la configuration.
+- Chargement de la configuration (dossier config/).
 
 Ce module ne doit contenir aucune logique métier spécifique à l'IBM.
 """
@@ -21,6 +21,12 @@ import yaml
 ROOT_DIR = Path(__file__).resolve().parent.parent
 CONFIG_DIR = ROOT_DIR / "config"
 WEIGHTS_PATH = CONFIG_DIR / "weights.yaml"
+
+
+def load_config(name: str) -> dict:
+    """Charge config/<name>.yaml."""
+    with open(CONFIG_DIR / f"{name}.yaml", encoding="utf-8") as f:
+        return yaml.safe_load(f)
 
 
 def load_weights(path: str | Path = WEIGHTS_PATH) -> dict[str, dict[str, float]]:
