@@ -55,6 +55,12 @@ st.markdown(
     f"{row['departement']} ({row['DEP']}) · code INSEE {code} · {number(row['population'])} habitants"
     + (" · **commune prioritaire**" if row["prioritaire"] else "")
 )
+if row["population"] < dashboard.SMALL_COMMUNE:
+    st.warning(
+        f"Commune de moins de {number(dashboard.SMALL_COMMUNE)} habitants : les taux reposent sur peu de "
+        "personnes et peuvent varier fortement d'une année à l'autre. À interpréter avec prudence.",
+        icon="⚠️",
+    )
 
 # --- Indicateurs principaux ----------------------------------------------------
 c1, c2, c3, c4 = st.columns(4)

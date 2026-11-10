@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import streamlit as st  # noqa: E402
-from common import TITLE, number, require_results, source_note  # noqa: E402
+from common import TITLE, limits_box, number, require_results, source_note  # noqa: E402
 
 from src import dashboard  # noqa: E402
 
@@ -33,11 +33,14 @@ c4.metric(
     help=f"{number(stats['population_prioritaire'])} habitants vivent dans une commune prioritaire.",
 )
 
+limits_box(df)
+
 st.subheader("Parcourir")
 st.page_link("pages/1_carte.py", label="Carte — IBM et IED commune par commune", icon="🗺️")
 st.page_link("pages/2_classement.py", label="Classement — trier, filtrer, exporter", icon="📋")
 st.page_link("pages/3_fiche_territoire.py", label="Fiche territoire — le détail d'une commune", icon="📍")
 st.page_link("pages/4_methodologie.py", label="Méthodologie — formules, sources, limites", icon="📐")
+st.page_link("pages/5_a_propos.py", label="À propos — auteur, licences, crédits, date des données", icon="ℹ️")
 
 st.subheader("Les plus grandes communes prioritaires")
 st.caption("Communes prioritaires de plus de 20 000 habitants, par IBM décroissant.")

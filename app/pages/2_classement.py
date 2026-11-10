@@ -46,11 +46,17 @@ table = dashboard.ranking(filters.apply(df), sort_by)
 if query:
     table = table[table["LIBGEO"].str.contains(query, case=False, regex=False)]
 
+small = int((table["population"] < dashboard.SMALL_COMMUNE).sum())
 stats = dashboard.summary(table, df)
 st.caption(
     f"{number(stats['communes'])} communes · {number(stats['population'])} habitants · "
     f"{number(stats['prioritaires'])} communes prioritaires"
 )
+if small:
+    st.caption(
+        f"⚠️ {number(small)} communes de la sélection ont moins de {number(dashboard.SMALL_COMMUNE)} habitants : "
+        "leurs valeurs sont instables. Le filtre « Habitants (minimum) » permet de les écarter."
+    )
 
 table = table.assign(fiche=[fiche_url(c) for c in table.index])
 columns = ["LIBGEO", "fiche", "departement", "population", "IBM", "rang_IBM", "IED", "rang_IED", "D", "V", "J",

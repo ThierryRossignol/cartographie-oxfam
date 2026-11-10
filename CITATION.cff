@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "Si vous utilisez cet outil ou sa méthodologie, merci de le citer comme suit."
+title: "Observatoire de la mobilisation citoyenne — Indice de Besoin de Mobilisation (IBM)"
+authors:
+  - family-names: Rossignol
+    given-names: Thierry
+    email: thierryrossignol8@gmail.com
+repository-code: "https://github.com/ThierryRossignol/cartographie-oxfam"
+license: MIT
+date-released: "2026-11-10"
+keywords:
+  - mobilisation citoyenne
+  - cartographie
+  - abstention
+  - données publiques

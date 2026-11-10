@@ -240,6 +240,22 @@ python -m src.pipeline publier      # ou : make publier
 git add data/published && git commit -m "Mise à jour des données publiées" && git push
 ```
 
+### Avant un rendez-vous : vérifier que l'application est éveillée
+
+Une application Streamlit gratuite se met en veille après une période sans visite ; le
+premier visiteur voit alors « This app has gone to sleep » et doit attendre son réveil
+(une à deux minutes).
+
+- **Réveil automatique** : le workflow GitHub Actions `Réveil du dashboard`
+  (`.github/workflows/reveil-app.yml`) visite l'application chaque matin et clique sur le
+  bouton de réveil si besoin. À activer une fois : GitHub → Settings → Secrets and variables
+  → Actions → Variables → `STREAMLIT_APP_URL` = adresse de l'application.
+- **Le jour J** : ouvrir l'application une heure avant (ou lancer le workflow à la main :
+  onglet Actions → « Réveil du dashboard » → Run workflow) et parcourir la carte une fois,
+  pour que les données soient déjà chargées en mémoire.
+- GitHub suspend les workflows planifiés d'un dépôt public sans activité pendant 60 jours :
+  un simple commit, ou un clic sur « Enable workflow », les relance.
+
 Déploiement : sur https://share.streamlit.io, « Create app » → dépôt `ThierryRossignol/cartographie-oxfam`,
 branche voulue, fichier principal `app/app.py`, Python 3.12 dans « Advanced settings ».
 Les dépendances en ligne sont celles de `app/requirements.txt` (allégées).
@@ -416,13 +432,36 @@ Bibliothèques envisagées :
 
 ---
 
-# Licence
+# Licences et crédits
 
-À définir.
+| Élément | Licence | Fichier |
+|---|---|---|
+| Code source | MIT : toute copie doit conserver la mention de l'auteur | [`LICENSE`](LICENSE) |
+| Méthodologie (indicateurs, formules, pondérations, documentation) | CC BY 4.0 : toute réutilisation doit citer l'auteur | [`LICENSE-METHODOLOGIE.md`](LICENSE-METHODOLOGIE.md) |
+| Données sources | Licence Ouverte / Open Licence 2.0 (Etalab) : citer le producteur et la date | — |
+
+**Citation suggérée** : Rossignol, T. (2026). *Observatoire de la mobilisation citoyenne — Indice de
+Besoin de Mobilisation (IBM)*. https://github.com/ThierryRossignol/cartographie-oxfam
+(GitHub propose aussi « Cite this repository », à partir de [`CITATION.cff`](CITATION.cff).)
+
+**Données utilisées**, toutes sous Licence Ouverte 2.0 :
+
+- Ministère de l'Intérieur — résultats électoraux par bureau de vote (présidentielles 2017 et 2022,
+  législatives 2024), via le jeu « Données des élections agrégées » de data.gouv.fr ;
+- INSEE — Filosofi 2021 (revenus et pauvreté), recensement de la population 2023, Code officiel
+  géographique 2025 ;
+- IGN — ADMIN EXPRESS, contours des communes au 1er janvier 2025, simplifiés par Etalab.
+
+Les données ont été retraitées : les résultats n'engagent pas leurs producteurs. Les dates de
+téléchargement figurent dans `data/published/metadata.json` et dans la page « À propos » de
+l'application. Auteur, licences, crédits et limites y sont aussi rappelés (`config/apropos.yaml`).
 
 ---
 
 # Auteur
+
+Thierry Rossignol — [thierryrossignol8@gmail.com](mailto:thierryrossignol8@gmail.com) —
+[github.com/ThierryRossignol](https://github.com/ThierryRossignol)
 
 Projet initié dans le cadre des activités de mobilisation citoyenne d'Oxfam France.
 

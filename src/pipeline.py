@@ -24,6 +24,7 @@ Fichiers produits :
 
 from __future__ import annotations
 
+import json
 import sys
 
 import pandas as pd
@@ -42,6 +43,7 @@ IBM_FILE = export.PROCESSED_DIR / "ibm_communes.csv"
 PUBLISHED_DIR = export.ROOT_DIR / "data" / "published"
 PUBLISHED_RESULTS = PUBLISHED_DIR / "ibm_communes.parquet"
 PUBLISHED_CONTOURS = PUBLISHED_DIR / "communes-1000m.geojson.gz"
+PUBLISHED_METADATA = PUBLISHED_DIR / "metadata.json"
 
 
 def _excluded_prefixes() -> list[str]:
@@ -155,6 +157,25 @@ def read_results(path=None) -> pd.DataFrame:
     return pd.read_csv(path, dtype=codes).set_index("code_commune")
 
 
+def data_metadata() -> dict:
+    """
+    Dates des données : calcul de la table des indicateurs et
+    téléchargement de chaque fichier source (date du fichier dans
+    data/raw/). Affichées dans la page « À propos ».
+    """
+    from datetime import datetime
+
+    def day(path) -> str:
+        return datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d")
+
+    raw = export.ROOT_DIR / "data" / "raw"
+    files = sorted(p for p in raw.rglob("*") if p.is_file() and p.name != ".gitkeep")
+    return {
+        "calcul": day(IBM_FILE),
+        "telechargements": {str(p.relative_to(raw)).replace("\\", "/"): day(p) for p in files},
+    }
+
+
 def run_publish() -> None:
     """
     Met à jour data/published/ (à versionner) à partir des résultats
@@ -167,7 +188,8 @@ def run_publish() -> None:
     PUBLISHED_DIR.mkdir(parents=True, exist_ok=True)
     read_results(IBM_FILE).to_parquet(PUBLISHED_RESULTS)
     shutil.copyfile(ContoursLoader().source_path("1000m"), PUBLISHED_CONTOURS)
-    for path in (PUBLISHED_RESULTS, PUBLISHED_CONTOURS):
+    PUBLISHED_METADATA.write_text(json.dumps(data_metadata(), ensure_ascii=False, indent=2), encoding="utf-8")
+    for path in (PUBLISHED_RESULTS, PUBLISHED_CONTOURS, PUBLISHED_METADATA):
         print(f"Écrit : {path} ({path.stat().st_size / 1e6:.1f} Mo)")
 
 

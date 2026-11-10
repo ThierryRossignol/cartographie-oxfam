@@ -15,7 +15,8 @@ import numpy as np
 import pandas as pd
 
 from src import mapping
-from src.pipeline import PUBLISHED_CONTOURS, read_results, results_path
+from src.pipeline import IBM_FILE, PUBLISHED_CONTOURS, PUBLISHED_METADATA, read_results, results_path
+from src.utils import load_config
 
 INDICATORS = {
     "IBM": "Indice de Besoin de Mobilisation",
@@ -259,3 +260,65 @@ def legend(indicator: str, df: pd.DataFrame) -> list[tuple[str, str]]:
         out.append((mapping.PALETTES[indicator][i], labels[i] + suffix))
     out.append((mapping.MISSING_COLOR, "Donnée manquante"))
     return out
+
+
+# ----------------------------------------------------------------------------
+# À propos, crédits et limites
+# ----------------------------------------------------------------------------
+
+# En dessous de ce seuil, les taux reposent sur peu d'habitants : ils sont
+# signalés comme instables dans la fiche et le classement.
+SMALL_COMMUNE = 1_000
+
+
+def about() -> dict:
+    """Auteur, licences et sources (config/apropos.yaml)."""
+    return load_config("apropos")
+
+
+def data_dates() -> dict:
+    """
+    Dates des données : {"calcul": "AAAA-MM-JJ", "telechargements": {...}}.
+    Lues dans data/published/metadata.json, ou recalculées à partir des
+    fichiers locaux quand le pipeline a tourné sur cette machine.
+    """
+    import json
+
+    if IBM_FILE.exists():
+        from src.pipeline import data_metadata
+
+        return data_metadata()
+    if PUBLISHED_METADATA.exists():
+        return json.loads(PUBLISHED_METADATA.read_text(encoding="utf-8"))
+    return {}
+
+
+def format_date(iso: str | None) -> str:
+    """« 2026-11-10 » → « 10 novembre 2026 »."""
+    if not iso:
+        return "date inconnue"
+    months = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août",
+              "septembre", "octobre", "novembre", "décembre"]
+    year, month, d = (int(x) for x in iso.split("-"))
+    return f"{d} {months[month - 1]} {year}"
+
+
+def limits(df: pd.DataFrame) -> list[str]:
+    """Limites à afficher partout où l'on présente l'outil (texte Markdown)."""
+    small = (df["population"] < SMALL_COMMUNE).mean()
+    fallback = (df["P_source"] == "epci").mean() if "P_source" in df else np.nan
+    return [
+        "**L'IBM aide à prioriser, il ne prédit pas les votes.** Il signale où les besoins de "
+        "mobilisation sont les plus forts ; il ne dit rien de l'effet d'une campagne.",
+        "**Des scores relatifs.** 1 = la commune au besoin le plus fort de métropole, 0 = le plus "
+        "faible : c'est un classement entre communes, pas un seuil absolu.",
+        "**Des données d'années différentes.** Les revenus et la pauvreté datent de 2021 "
+        "(Filosofi 2021 ; un millésime plus récent existe, la mise à jour reste à faire). "
+        "Recensement 2023. Élections de 2017 à 2024.",
+        f"**Petites communes : valeurs instables.** Sous {format_value(SMALL_COMMUNE, '', 0)} habitants "
+        f"({small:.0%} des communes), les taux reposent sur peu de personnes et varient fortement."
+        .replace("%", " %"),
+        f"**Pauvreté estimée à l'échelle de l'intercommunalité** pour {fallback:.0%} des communes "
+        "(secret statistique de l'INSEE).".replace("%", " %"),
+        "**France métropolitaine uniquement.** Les outre-mer ne sont pas couverts.",
+    ]

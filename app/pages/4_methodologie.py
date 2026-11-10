@@ -115,14 +115,10 @@ st.markdown(
 )
 
 st.header("Limites")
+st.markdown("\n".join(f"- {line}" for line in dashboard.limits(df)))
 st.markdown(
     """
-- **Des données de dates différentes** : revenus 2021, recensement 2023 (moyenne 2021-2025), élections
-  2017 à 2024.
-- **Petites communes** : les taux reposent sur peu d'habitants et varient beaucoup ; l'écrêtage limite
-  leur effet sur l'échelle, pas leur incertitude. À lire avec la population (colonne Habitants).
-- **Repli intercommunal** : pour 88 % des communes, le taux de pauvreté est celui de l'intercommunalité ;
-  il gomme les écarts entre communes voisines.
+- **Repli intercommunal** : il gomme les écarts de pauvreté entre communes voisines.
 - **Données manquantes** : 10 communes sans IBM (villages de la Meuse inhabités, îles sans
   intercommunalité, très petites communes) et 25 sans IED (dont une vingtaine dont les voix par
   candidat manquent dans la source).
@@ -130,4 +126,5 @@ st.markdown(
   reste indispensable.
 """
 )
-st.caption("Code source et documentation complète : README du projet.")
+st.caption("Code source et documentation complète : README du projet. Méthodologie sous licence CC BY 4.0 "
+           "— voir la page À propos.")

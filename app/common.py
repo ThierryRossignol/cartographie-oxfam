@@ -77,7 +77,19 @@ def fiche_url(code: str) -> str:
 
 
 def source_note() -> None:
+    """Crédits des données et de l'auteur, en bas de chaque page."""
+    author = dashboard.about()["auteur"]["nom"]
     st.caption(
-        "Sources : Ministère de l'Intérieur (data.gouv.fr), INSEE (Filosofi 2021, recensement 2023), "
-        "IGN / Etalab (contours 2025). France métropolitaine. Voir la page Méthodologie."
+        "Données : Ministère de l'Intérieur (data.gouv.fr), INSEE (Filosofi 2021, recensement 2023), "
+        "IGN / Etalab (contours 2025), sous Licence Ouverte 2.0. France métropolitaine. "
+        f"Outil et méthodologie : {author} (code MIT, méthodologie CC BY 4.0). "
+        "Limites, licences et contact : page [À propos](/a-propos)."
+    )
+
+
+def limits_box(df) -> None:
+    """Encadré des limites, bien visible (accueil)."""
+    st.warning(
+        "**À savoir avant d'utiliser l'outil**\n\n" + "\n".join(f"- {line}" for line in dashboard.limits(df)),
+        icon="⚠️",
     )

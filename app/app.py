@@ -22,6 +22,7 @@ navigation = st.navigation(
         st.Page("pages/2_classement.py", title="Classement", icon="📋", url_path="classement"),
         st.Page("pages/3_fiche_territoire.py", title="Fiche territoire", icon="📍", url_path="fiche"),
         st.Page("pages/4_methodologie.py", title="Méthodologie", icon="📐", url_path="methodologie"),
+        st.Page("pages/5_a_propos.py", title="À propos", icon="ℹ️", url_path="a-propos"),
     ]
 )
 navigation.run()

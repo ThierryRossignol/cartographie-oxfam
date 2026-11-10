@@ -176,3 +176,61 @@ def test_page_carte():
     at = run_page(f"{PAGES}/1_carte.py")
     at.radio[0].set_value("IED").run()
     assert not at.exception
+
+
+# --- À propos, crédits, limites -------------------------------------------------
+
+
+def test_about_config_complete():
+    info = dashboard.about()
+    assert info["auteur"]["nom"] == "Thierry Rossignol"
+    assert info["auteur"]["email"] and info["auteur"]["github"]
+    assert {"code", "methodologie"} <= set(info["licences"])
+    producers = " ".join(s["producteur"] for s in info["sources"])
+    for name in ("INSEE", "Ministère de l'Intérieur", "IGN"):
+        assert name in producers
+
+
+def test_license_files_exist():
+    from src.utils import ROOT_DIR
+
+    assert "MIT License" in (ROOT_DIR / "LICENSE").read_text(encoding="utf-8")
+    assert "Thierry Rossignol" in (ROOT_DIR / "LICENSE").read_text(encoding="utf-8")
+    assert "CC BY 4.0" in (ROOT_DIR / "LICENSE-METHODOLOGIE.md").read_text(encoding="utf-8")
+
+
+def test_format_date():
+    assert dashboard.format_date("2026-11-10") == "10 novembre 2026"
+    assert dashboard.format_date(None) == "date inconnue"
+
+
+def test_limits_mention_key_caveats(df):
+    df = df.assign(P_source=["epci"] * 8 + ["commune"] * 2)
+    text = " ".join(dashboard.limits(df))
+    assert "ne prédit pas les votes" in text
+    assert "2021" in text
+    assert "instables" in text and "50 %" in text       # 5 communes sur 10 < 1 000 habitants
+    assert "80 %" in text                                # repli EPCI
+
+
+@needs_data
+def test_page_a_propos():
+    at = run_page(f"{PAGES}/5_a_propos.py")
+    assert at.title[0].value == "À propos"
+    headers = [h.value for h in at.header]
+    assert headers == ["Auteur et contact", "Licences", "Sources et date des données", "Limites à connaître"]
+    assert "Rossignol" in at.code[0].value
+
+
+@needs_data
+def test_page_fiche_small_commune_warning():
+    at = run_page(f"{PAGES}/3_fiche_territoire.py", commune="01001")   # ~800 habitants
+    assert any("moins de 1" in w.value for w in at.warning)
+    big = run_page(f"{PAGES}/3_fiche_territoire.py", commune="62498")  # Lens
+    assert not big.warning
+
+
+@needs_data
+def test_page_accueil_shows_limits():
+    at = run_page("app/accueil.py")
+    assert any("ne prédit pas les votes" in w.value for w in at.warning)
