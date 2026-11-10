@@ -108,6 +108,32 @@ def test_income_indicators_fallback_to_epci():
     assert np.isnan(out.loc["01004", "P"]) and pd.isna(out.loc["01004", "P_source"])
 
 
+def test_income_indicators_with_newer_geography():
+    """Filosofi en géographie N+1 : commune fusionnée et EPCI renommé."""
+    filosofi = pd.DataFrame(
+        [
+            ("COM", "01001", "PR_MD60", 20.0),     # 01001 fusionnée dans 01001 (inchangé)
+            ("COM", "01001", "MED_SL", 18000.0),
+            ("EPCI", "E2", "PR_MD60", 15.0),       # EPCI de la nouvelle géographie
+            ("EPCI", "E2", "MED_SL", 21000.0),
+        ],
+        columns=["GEO_OBJECT", "GEO", "FILOSOFI_MEASURE", "OBS_VALUE"],
+    )
+    membership = pd.DataFrame({"CODGEO": ["01001", "01002", "01003"], "EPCI": ["E1", "E1", "E1"]})
+    passage = pd.DataFrame({"CODGEO_INI": ["01001", "01002", "01003"], "CODGEO_COG": ["01001", "01001", "01003"]})
+    membership_new = pd.DataFrame({"CODGEO": ["01001", "01003"], "EPCI": ["E2", "E2"]})
+
+    geo = preprocessing.filosofi_geography(membership, passage, membership_new)
+    assert geo.loc["01002", "code_filo"] == "01001"
+    assert geo.loc["01003", "epci_filo"] == "E2"
+
+    out = preprocessing.income_indicators(filosofi, membership, geo)
+    # 01002 a fusionné dans 01001 : elle prend la valeur de la commune nouvelle
+    assert out.loc["01002", "P"] == 20.0 and out.loc["01002", "P_source"] == "commune"
+    # 01003 sans valeur propre : repli sur son EPCI dans la nouvelle géographie
+    assert out.loc["01003", "P"] == 15.0 and out.loc["01003", "P_source"] == "epci"
+
+
 def test_merge_tables_keeps_current_communes():
     socio = pd.DataFrame({"LIBGEO": ["A", "B"], "P": [10.0, 20.0]}, index=pd.Index(["01001", "01002"], name="code_commune"))
     abst = pd.DataFrame(

@@ -91,12 +91,15 @@ def build_elections(insee: InseeLoader | None = None) -> tuple[pd.DataFrame, pd.
 def build_socio(insee: InseeLoader | None = None) -> pd.DataFrame:
     """Variables socio-économiques INSEE par commune."""
     insee = insee or InseeLoader()
+    membership = insee.commune_membership()
+    passage_filo, membership_filo = insee.filosofi_geography()
     table = preprocessing.socio_by_commune(
         population=insee.population_by_age(),
         diplomas=insee.diplomas(),
         employment=insee.employment(),
         filosofi=insee.filosofi(),
-        membership=insee.commune_membership(),
+        membership=membership,
+        filosofi_geo=preprocessing.filosofi_geography(membership, passage_filo, membership_filo),
     )
     return preprocessing.filter_perimeter(table, _excluded_prefixes())
 

@@ -98,14 +98,15 @@ def download_file(url: str, destination: Path, timeout: int = 120, retries: int 
 class CachedSource:
     """Un fichier distant, téléchargé une fois dans `raw_dir`."""
 
-    def __init__(self, url: str, raw_dir: str | Path):
+    def __init__(self, url: str, raw_dir: str | Path, filename: str | None = None):
         self.url = url
         self.raw_dir = Path(raw_dir)
+        self.filename = filename
 
     @property
     def path(self) -> Path:
-        """Chemin de la copie locale (nom de fichier repris de l'URL)."""
-        return self.raw_dir / Path(urlparse(self.url).path).name
+        """Chemin de la copie locale (nom donné, ou repris de l'URL)."""
+        return self.raw_dir / (self.filename or Path(urlparse(self.url).path).name)
 
     def download(self, force: bool = False) -> Path:
         """
@@ -293,7 +294,11 @@ class InseeLoader:
         self.urls = urls or load_config("sources")["insee"]
 
     def source(self, key: str) -> CachedSource:
-        return CachedSource(self.urls[key], self.raw_dir)
+        """Source `key` de config/sources.yaml : une URL, ou {url, fichier}."""
+        entry = self.urls[key]
+        if isinstance(entry, dict):
+            return CachedSource(entry["url"], self.raw_dir, entry.get("fichier"))
+        return CachedSource(entry, self.raw_dir)
 
     def download_all(self, force: bool = False) -> list[Path]:
         return [self.source(k).download(force) for k in self.urls]
@@ -304,7 +309,8 @@ class InseeLoader:
 
         Mesures utiles : PR_MD60 = taux de pauvreté (%), MED_SL = niveau de
         vie médian (€). Valeur manquante = donnée soumise au secret
-        statistique (trop peu de ménages).
+        statistique (trop peu de ménages). Les codes sont ceux de la
+        géographie de Filosofi (voir `filosofi_geography`).
         """
         path = self.source("filosofi").download()
         with zipfile.ZipFile(path) as z:
@@ -349,18 +355,29 @@ class InseeLoader:
             EMPSTA_ENQ=["1", "2", "1T2"],
         )
 
-    def commune_passage(self, cog_year: int | None = None) -> pd.DataFrame:
+    def commune_passage(self, cog_year: int | None = None, key: str = "table_passage") -> pd.DataFrame:
         """
         Table de passage : CODGEO_INI (tout code ayant existé depuis 2003)
         → CODGEO_<année> (code actuel). Une commune scindée a plusieurs lignes.
         """
         cog_year = cog_year or load_config("sources")["cog_annee"]
-        df = read_insee_xlsx(self.source("table_passage").download(), "Table de passage")
+        df = read_insee_xlsx(self.source(key).download(), "Table de passage")
         return df.rename(columns={f"CODGEO_{cog_year}": "CODGEO_COG"})[["CODGEO_INI", "CODGEO_COG"]]
 
-    def commune_membership(self) -> pd.DataFrame:
+    def commune_membership(self, key: str = "appartenance") -> pd.DataFrame:
         """Communes actuelles : CODGEO, LIBGEO, DEP, REG, EPCI…"""
-        return read_insee_xlsx(self.source("appartenance").download(), "COM")
+        return read_insee_xlsx(self.source(key).download(), "COM")
+
+    def filosofi_geography(self) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Tables pour passer de la géographie du projet à celle de Filosofi :
+        (table de passage vers l'année de Filosofi, communes de cette année
+        avec leur EPCI).
+        """
+        year = load_config("sources")["filosofi_geo_annee"]
+        passage = self.commune_passage(year, key="table_passage_filosofi")
+        membership = self.commune_membership(key="appartenance_filosofi")
+        return passage, membership
 
 
 # ----------------------------------------------------------------------------

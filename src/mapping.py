@@ -225,7 +225,7 @@ def _swatch(color: str, label: str):
 
 
 SOURCE_NOTE = (
-    "Sources : Ministère de l'Intérieur (data.gouv.fr), INSEE (Filosofi 2021, recensement 2023), "
+    "Sources : Ministère de l'Intérieur (data.gouv.fr), INSEE (Filosofi 2023, recensement 2023), "
     "IGN / Etalab (contours 2025). France métropolitaine."
 )
 

@@ -226,17 +226,47 @@ def unemployment_rate(employment: pd.DataFrame) -> pd.Series:
     return _share(wide["2"], wide["1T2"]).rename("C")
 
 
-def income_indicators(filosofi: pd.DataFrame, membership: pd.DataFrame) -> pd.DataFrame:
+def filosofi_geography(
+    membership: pd.DataFrame, passage: pd.DataFrame, membership_filo: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Rattache chaque commune du projet à la géographie des données Filosofi,
+    quand elles n'ont pas la même année de référence.
+
+    - `membership` : communes du projet (CODGEO, EPCI).
+    - `passage` : table de passage vers l'année de Filosofi (CODGEO_INI →
+      CODGEO_COG, voir InseeLoader.filosofi_geography).
+    - `membership_filo` : communes de l'année de Filosofi (CODGEO, EPCI).
+
+    Résultat indexé par code commune du projet : `code_filo` (commune
+    correspondante, ex. la commune nouvelle en cas de fusion) et
+    `epci_filo` (son EPCI dans la géographie de Filosofi, à défaut l'EPCI
+    actuel).
+    """
+    out = membership[["CODGEO", "EPCI"]].set_index("CODGEO")
+    mapping = passage.drop_duplicates("CODGEO_INI").set_index("CODGEO_INI")["CODGEO_COG"]
+    codes = out.index.to_series()
+    out["code_filo"] = codes.map(mapping).fillna(codes)
+    epci_filo = membership_filo.set_index("CODGEO")["EPCI"]
+    out["epci_filo"] = out["code_filo"].map(epci_filo).fillna(out["EPCI"])
+    return out[["code_filo", "epci_filo"]]
+
+
+def income_indicators(
+    filosofi: pd.DataFrame, membership: pd.DataFrame, geography: pd.DataFrame | None = None
+) -> pd.DataFrame:
     """
     P (taux de pauvreté, %) et R (niveau de vie médian, €) par commune.
 
     Le secret statistique masque le taux de pauvreté des communes de moins
-    de ~1 000 ménages (88 % des communes) et le niveau de vie médian des
-    plus petites. Dans ce cas, on prend la valeur de l'intercommunalité
-    (EPCI), toujours disponible. Les colonnes P_source / R_source indiquent
-    l'origine de chaque valeur : "commune" ou "epci".
+    de ~1 000 ménages et le niveau de vie médian des plus petites. Dans ce
+    cas, on prend la valeur de l'intercommunalité (EPCI), toujours
+    disponible. Les colonnes P_source / R_source indiquent l'origine de
+    chaque valeur : "commune" ou "epci".
 
-    `membership` : InseeLoader.commune_membership (CODGEO, EPCI).
+    - `membership` : InseeLoader.commune_membership (CODGEO, EPCI).
+    - `geography` : correspondance vers la géographie de Filosofi
+      (`filosofi_geography`) ; par défaut, mêmes codes et mêmes EPCI.
     """
     wide = filosofi.pivot_table(
         index=["GEO_OBJECT", "GEO"], columns="FILOSOFI_MEASURE", values="OBS_VALUE"
@@ -244,16 +274,21 @@ def income_indicators(filosofi: pd.DataFrame, membership: pd.DataFrame) -> pd.Da
     commune = wide.loc["COM"] if "COM" in wide.index.get_level_values(0) else wide.iloc[:0]
     epci = wide.loc["EPCI"] if "EPCI" in wide.index.get_level_values(0) else wide.iloc[:0]
 
-    out = membership[["CODGEO", "EPCI"]].set_index("CODGEO")
-    for var, measure in [("P", "PR_MD60"), ("R", "MED_SL")]:
-        own = out.index.map(commune[measure]) if measure in commune else np.nan
-        fallback = out["EPCI"].map(epci[measure]) if measure in epci else np.nan
-        own = pd.Series(own, index=out.index, dtype=float)
-        out[var] = own.fillna(pd.Series(fallback, index=out.index, dtype=float))
-        out[f"{var}_source"] = np.where(own.notna(), "commune", np.where(out[var].notna(), "epci", None))
+    if geography is None:
+        geography = membership.set_index("CODGEO").rename(columns={"EPCI": "epci_filo"})[["epci_filo"]]
+        geography["code_filo"] = geography.index
+    out = pd.DataFrame(index=membership["CODGEO"].rename("code_commune"))
+    code_filo = out.index.map(geography["code_filo"])
+    epci_filo = out.index.map(geography["epci_filo"])
 
-    out.index.name = "code_commune"
-    return out.drop(columns="EPCI")
+    for var, measure in [("P", "PR_MD60"), ("R", "MED_SL")]:
+        own = pd.Series(code_filo.map(commune[measure]) if measure in commune else np.nan,
+                        index=out.index, dtype=float)
+        fallback = pd.Series(epci_filo.map(epci[measure]) if measure in epci else np.nan,
+                             index=out.index, dtype=float)
+        out[var] = own.fillna(fallback)
+        out[f"{var}_source"] = np.where(own.notna(), "commune", np.where(out[var].notna(), "epci", None))
+    return out
 
 
 def socio_by_commune(
@@ -262,6 +297,7 @@ def socio_by_commune(
     employment: pd.DataFrame,
     filosofi: pd.DataFrame,
     membership: pd.DataFrame,
+    filosofi_geo: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """
     Table socio-économique, une ligne par commune actuelle :
@@ -270,7 +306,8 @@ def socio_by_commune(
     """
     base = membership.set_index("CODGEO")[["LIBGEO", "DEP", "EPCI"]]
     base.index.name = "code_commune"
-    table = base.join(total_population(population)).join(income_indicators(filosofi, membership))
+    income = income_indicators(filosofi, membership, filosofi_geo)
+    table = base.join(total_population(population)).join(income)
     table = table.join(unemployment_rate(employment)).join(no_diploma_share(diplomas)).join(youth_share(population))
     return table.sort_index()
 

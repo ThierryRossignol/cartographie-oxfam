@@ -303,8 +303,8 @@ Réglages (dossier `config/`) :
 | Variable | Source | Définition |
 |---|---|---|
 | A2022, A2017, A2024 | Ministère de l'Intérieur via data.gouv.fr | Abstentions / inscrits, 1er tour (présidentielles 2022 et 2017, législatives 2024) |
-| P | INSEE Filosofi 2021 | Taux de pauvreté au seuil de 60 % |
-| R | INSEE Filosofi 2021 | Niveau de vie médian (inversé : faible revenu = besoin fort) |
+| P | INSEE Filosofi 2023 | Taux de pauvreté au seuil de 60 % |
+| R | INSEE Filosofi 2023 | Niveau de vie médian (inversé : faible revenu = besoin fort) |
 | C | INSEE Recensement 2023 | Chômeurs / actifs de 15-64 ans (au sens du recensement) |
 | SD | INSEE Recensement 2023 | Part des 15 ans ou plus non scolarisés sans diplôme ou avec le seul CEP |
 | Y | INSEE Recensement 2023 | Part des 19-25 ans dans la population |
@@ -313,7 +313,8 @@ Réglages (dossier `config/`) :
 
 - **Géographie** : toutes les données sont ramenées aux communes au 1er janvier 2025 grâce à la table de passage de l'INSEE (communes fusionnées regroupées, communes scindées héritant du taux de l'ancienne commune). Paris, Lyon et Marseille sont traitées comme une seule commune.
 - **Périmètre** : France métropolitaine. Les outre-mer sont exclus : leur abstention (45 à 85 % en médiane, contre 20 % en métropole) écraserait l'échelle.
-- **Secret statistique** : le taux de pauvreté n'est publié que pour ~4 300 communes (les plus grandes) et le niveau de vie médian pour ~31 000. Pour les autres, on utilise la valeur de l'intercommunalité (colonnes `P_source` et `R_source`).
+- **Filosofi 2023** est publié dans la géographie au 1er janvier 2026 : chaque commune est rattachée à sa commune et à son intercommunalité 2026 (tables de l'INSEE) pour lire ses valeurs.
+- **Secret statistique** : le taux de pauvreté n'est publié que pour ~5 200 communes (les plus grandes) et le niveau de vie médian pour ~30 800. Pour les autres, on utilise la valeur de l'intercommunalité (colonnes `P_source` et `R_source`).
 - **Normalisation** : chaque variable est écrêtée entre le 1er et le 99e centile, puis ramenée entre 0 et 1. Les scores sont relatifs : 1 = commune au plus fort besoin de la métropole.
 - **IED** : le candidat retenu est réglable dans `config/elections.yaml` (`ied.candidats`). Les exprimés sont recalculés comme la somme des voix de tous les candidats, la colonne de la source étant parfois erronée.
 - **Communes sans IED** (25) : en plus des communes sans IBM, une vingtaine de communes dont les voix par candidat valent 0 dans le fichier agrégé de data.gouv.fr pour 2017 ou 2022 (donnée manquante à la source).
@@ -448,7 +449,7 @@ Besoin de Mobilisation (IBM)*. https://github.com/ThierryRossignol/cartographie-
 
 - Ministère de l'Intérieur — résultats électoraux par bureau de vote (présidentielles 2017 et 2022,
   législatives 2024), via le jeu « Données des élections agrégées » de data.gouv.fr ;
-- INSEE — Filosofi 2021 (revenus et pauvreté), recensement de la population 2023, Code officiel
+- INSEE — Filosofi 2023 (revenus et pauvreté, catalogue Melodi), recensement de la population 2023, Code officiel
   géographique 2025 ;
 - IGN — ADMIN EXPRESS, contours des communes au 1er janvier 2025, simplifiés par Etalab.
 

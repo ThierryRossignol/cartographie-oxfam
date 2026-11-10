@@ -10,6 +10,8 @@
 # Géographie de référence : toutes les communes sont ramenées
 # au Code officiel géographique (COG) de cette année.
 cog_annee: 2025
+# Géographie des données Filosofi (voir insee.filosofi ci-dessous).
+filosofi_geo_annee: 2026
 
 elections:
   # Données des élections agrégées (data.gouv.fr) — résultats généraux, Parquet
@@ -18,8 +20,16 @@ elections:
   resultats_candidats: https://www.data.gouv.fr/api/1/datasets/r/4d3b35f6-0b22-4415-a24c-419a676312e2
 
 insee:
-  # Filosofi 2021, base communale, géographie 2025 (pauvreté, niveau de vie)
-  filosofi: https://www.insee.fr/fr/statistiques/fichier/7756729/base-cc-filosofi-2021-geo2025_csv.zip
+  # Filosofi 2023 (revenus 2023), base communale, géographie au 1er janvier
+  # 2026 — catalogue Melodi de l'INSEE (accès public, sans clé).
+  # L'adresse ne contient pas d'extension : le nom du fichier local est donné.
+  filosofi:
+    url: https://api.insee.fr/melodi/file/DS_FILOSOFI_CC/DS_FILOSOFI_CC_2023_CSV_FR
+    fichier: DS_FILOSOFI_CC_2023_CSV_FR.zip
+  # Géographie de Filosofi (2026), différente de celle du projet (2025) :
+  # tables pour rattacher chaque commune à sa commune et son EPCI 2026.
+  table_passage_filosofi: https://www.insee.fr/fr/statistiques/fichier/7671867/table_passage_geo2003_geo2026.zip
+  appartenance_filosofi: https://www.insee.fr/fr/statistiques/fichier/7671844/table-appartenance-geo-communes-2026.zip
 
   # Recensement 2023 — population par âge détaillé (une ligne par année d'âge)
   population_age: https://www.insee.fr/fr/statistiques/fichier/9006235/DS_RP_TD_POPULATION_AGESEX_PRINC_2023.parquet

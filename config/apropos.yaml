@@ -36,9 +36,9 @@ sources:
     millesime: Scrutins 2017 à 2024
     url: https://www.data.gouv.fr/fr/datasets/donnees-des-elections-agregees/
   - producteur: INSEE
-    donnees: Filosofi — revenus et pauvreté des ménages (base communale)
-    millesime: Revenus 2021, géographie 2025
-    url: https://www.insee.fr/fr/statistiques/7756729
+    donnees: Filosofi — revenus et pauvreté des ménages (base communale), via le catalogue Melodi
+    millesime: Revenus 2023, géographie 2026
+    url: https://catalogue-donnees.insee.fr/fr/catalogue/recherche/DS_FILOSOFI_CC
   - producteur: INSEE
     donnees: Recensement de la population — âge, diplômes, emploi et chômage
     millesime: Recensement 2023 (enquêtes 2021 à 2025)

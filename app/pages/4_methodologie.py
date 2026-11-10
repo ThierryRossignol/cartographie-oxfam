@@ -86,8 +86,8 @@ st.table(
         ],
         "Source": [
             "Ministère de l'Intérieur, via data.gouv.fr",
-            "INSEE, Filosofi 2021",
-            "INSEE, Filosofi 2021",
+            "INSEE, Filosofi 2023",
+            "INSEE, Filosofi 2023",
             "INSEE, recensement 2023",
             "INSEE, recensement 2023",
             "INSEE, recensement 2023",
@@ -107,8 +107,8 @@ st.markdown(
 - **Mise à l'échelle** : chaque variable est écrêtée entre ses {norm['quantile_bas']:.0%} et
   {norm['quantile_haut']:.0%} centiles, puis ramenée entre 0 et 1. Les scores sont **relatifs** :
   1 = la commune au besoin le plus fort de métropole, pas un seuil absolu.
-- **Secret statistique** : l'INSEE ne publie le taux de pauvreté que pour ~4 300 communes et le niveau de vie
-  médian pour ~31 000. Pour les autres, on prend la valeur de l'intercommunalité (indiqué sur la fiche).
+- **Secret statistique** : l'INSEE ne publie le taux de pauvreté que pour ~5 200 communes et le niveau de vie
+  médian pour ~30 800. Pour les autres, on prend la valeur de l'intercommunalité (indiqué sur la fiche).
 - **Communes prioritaires** : les 20 % de communes à l'IBM le plus élevé.
 - **Classes des cartes** : 5 classes d'effectifs égaux (quintiles), calculées sur toute la métropole.
 """.replace("%", " %").replace("  %", " %")

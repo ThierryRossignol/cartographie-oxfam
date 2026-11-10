@@ -5,11 +5,13 @@
     "elections/general_results.parquet": "2026-11-10",
     "ign/communes-1000m-2025-01-08.geojson.gz": "2026-11-10",
     "ign/communes-100m-2025-01-08.geojson.gz": "2026-11-10",
+    "insee/DS_FILOSOFI_CC_2023_CSV_FR.zip": "2026-11-10",
     "insee/DS_RP_DIPLOMES_PRINC_2023.parquet": "2026-11-10",
     "insee/DS_RP_EMPLOI_LR_PRINC_2023.parquet": "2026-11-10",
     "insee/DS_RP_TD_POPULATION_AGESEX_PRINC_2023.parquet": "2026-11-10",
-    "insee/base-cc-filosofi-2021-geo2025_csv.zip": "2026-11-10",
     "insee/table-appartenance-geo-communes-2025.zip": "2026-11-10",
-    "insee/table_passage_geo2003_geo2025.zip": "2026-11-10"
+    "insee/table-appartenance-geo-communes-2026.zip": "2026-11-10",
+    "insee/table_passage_geo2003_geo2025.zip": "2026-11-10",
+    "insee/table_passage_geo2003_geo2026.zip": "2026-11-10"
   }
 }

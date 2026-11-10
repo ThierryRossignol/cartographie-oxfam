@@ -312,9 +312,8 @@ def limits(df: pd.DataFrame) -> list[str]:
         "mobilisation sont les plus forts ; il ne dit rien de l'effet d'une campagne.",
         "**Des scores relatifs.** 1 = la commune au besoin le plus fort de métropole, 0 = le plus "
         "faible : c'est un classement entre communes, pas un seuil absolu.",
-        "**Des données d'années différentes.** Les revenus et la pauvreté datent de 2021 "
-        "(Filosofi 2021 ; un millésime plus récent existe, la mise à jour reste à faire). "
-        "Recensement 2023. Élections de 2017 à 2024.",
+        "**Des données d'années différentes.** Revenus et pauvreté : 2023 (Filosofi). "
+        "Recensement : 2023 (enquêtes 2021 à 2025). Élections : 2017 à 2024.",
         f"**Petites communes : valeurs instables.** Sous {format_value(SMALL_COMMUNE, '', 0)} habitants "
         f"({small:.0%} des communes), les taux reposent sur peu de personnes et varient fortement."
         .replace("%", " %"),

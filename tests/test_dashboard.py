@@ -208,7 +208,7 @@ def test_limits_mention_key_caveats(df):
     df = df.assign(P_source=["epci"] * 8 + ["commune"] * 2)
     text = " ".join(dashboard.limits(df))
     assert "ne prédit pas les votes" in text
-    assert "2021" in text
+    assert "2023" in text and "2021 à 2025" in text
     assert "instables" in text and "50 %" in text       # 5 communes sur 10 < 1 000 habitants
     assert "80 %" in text                                # repli EPCI
 
