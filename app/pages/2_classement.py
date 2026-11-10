@@ -105,7 +105,7 @@ if codes:
     )
     order = [*dashboard.COMPONENTS, "IBM", "IED"]
     # Une petite barre par indicateur et par commune ; une seule couleur
-    # (bleu IBM) : la commune est nommée sur l'axe, pas codée par la couleur.
+    # (couleur IBM) : la commune est nommée sur l'axe, pas codée par la couleur.
     chart = (
         alt.Chart(long)
         .mark_bar(color=mapping.PALETTES["IBM"][2], cornerRadiusEnd=4, height=14)

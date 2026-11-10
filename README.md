@@ -301,7 +301,7 @@ Réglages (dossier `config/`) :
 - **Normalisation** : chaque variable est écrêtée entre le 1er et le 99e centile, puis ramenée entre 0 et 1. Les scores sont relatifs : 1 = commune au plus fort besoin de la métropole.
 - **IED** : le candidat retenu est réglable dans `config/elections.yaml` (`ied.candidats`). Les exprimés sont recalculés comme la somme des voix de tous les candidats, la colonne de la source étant parfois erronée.
 - **Communes sans IED** (25) : en plus des communes sans IBM, une vingtaine de communes dont les voix par candidat valent 0 dans le fichier agrégé de data.gouv.fr pour 2017 ou 2022 (donnée manquante à la source).
-- **Cartes** : chaque indicateur est découpé en 5 classes d'effectifs égaux (quintiles), lues comme « les 20 % de communes les plus… ». Une teinte par indicateur (bleu pour l'IBM, orange pour l'IED), du clair au foncé ; gris pour les données manquantes. Contours IGN ADMIN EXPRESS simplifiés par Etalab (géographie 2025).
+- **Cartes** : chaque indicateur est découpé en 5 classes d'effectifs égaux (quintiles), lues comme « les 20 % de communes les plus… ». Une palette par indicateur, du clair au foncé, qui change aussi de teinte pour que les classes voisines restent distinctes (jaune → vert → bleu pour l'IBM, jaune → orange → rouge pour l'IED) ; gris pour les données manquantes. Contours IGN ADMIN EXPRESS simplifiés par Etalab (géographie 2025).
 - **Communes sans IBM** (10) : villages de la Meuse inhabités depuis 1916, îles sans intercommunalité, très petites communes.
 
 ---

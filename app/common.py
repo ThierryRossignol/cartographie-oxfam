@@ -55,7 +55,8 @@ def number(value, decimals: int = 0) -> str:
 def legend_html(items: list[tuple[str, str]], title: str = "") -> str:
     rows = "".join(
         f'<div style="display:flex;align-items:center;gap:8px;margin:2px 0">'
-        f'<span style="width:16px;height:12px;border-radius:2px;background:{color};display:inline-block"></span>'
+        f'<span style="width:16px;height:12px;border-radius:2px;background:{color};'
+        f'border:1px solid {mapping.LEGEND_EDGE};display:inline-block"></span>'
         f"<span>{label}</span></div>"
         for color, label in items
     )

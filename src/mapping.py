@@ -15,9 +15,10 @@ Choix de représentation :
 - Les indicateurs sont découpés en 5 classes d'effectifs égaux (quintiles) :
   « 20 % des communes les plus prioritaires », lecture directe pour
   préparer une campagne.
-- Une teinte par indicateur, du clair (faible) au foncé (fort) :
-  bleu pour l'IBM, orange pour l'IED. Les rampes ont été vérifiées
-  (luminosité croissante, écarts visibles, contraste avec le fond).
+- Une palette par indicateur, du clair (faible) au foncé (fort), qui
+  varie à la fois en clarté et en teinte pour que les classes voisines
+  restent distinctes même sur de très petites communes :
+  jaune → vert → bleu pour l'IBM, jaune → orange → rouge pour l'IED.
 - Gris neutre pour les communes sans donnée, toujours légendé.
 """
 
@@ -32,13 +33,17 @@ import pandas as pd
 # Palettes
 # ----------------------------------------------------------------------------
 
-# Rampes ordinales à 5 classes (clair → foncé). Validées : luminosité
-# monotone, écart de luminosité >= 0,06 entre classes voisines, classe la
-# plus claire >= 2:1 de contraste avec le fond.
+# Rampes à 5 classes (clair → foncé), clarté et teinte croissantes.
+# Vérifiées : écart de couleur entre classes voisines >= 15 (OKLab ×100)
+# en vision normale et >= 8 en vision daltonienne simulée — l'ancienne
+# rampe bleue à teinte unique plafonnait à 9,5 et se lisait mal.
+# Les classes les plus claires sont peu contrastées avec le fond : les
+# pastilles de légende ont donc un fin contour (LEGEND_EDGE).
 PALETTES = {
-    "IBM": ["#86b6ef", "#3987e5", "#256abf", "#184f95", "#0d366b"],  # bleu
-    "IED": ["#e6a078", "#d35f2c", "#b2411a", "#892d16", "#611e11"],  # orange
+    "IBM": ["#f0f388", "#7cd591", "#00a8a9", "#006bab", "#23367b"],  # jaune → vert → bleu
+    "IED": ["#fff198", "#ffac34", "#e95c12", "#b32322", "#6e0b22"],  # jaune → orange → rouge
 }
+LEGEND_EDGE = "#c3c2b7"
 MISSING_COLOR = "#d6d5d0"   # sans donnée
 OTHER_COLOR = "#ebeae6"     # communes hors sélection
 BORDER_COLOR = "#fcfcfb"    # limites de départements (couleur du fond)
@@ -216,7 +221,7 @@ def _thousands(n: int) -> str:
 def _swatch(color: str, label: str):
     from matplotlib.patches import Patch
 
-    return Patch(facecolor=color, edgecolor="none", label=label)
+    return Patch(facecolor=color, edgecolor=LEGEND_EDGE, linewidth=0.6, label=label)
 
 
 SOURCE_NOTE = (
@@ -260,7 +265,9 @@ def priority_map(communes, outlines=None, top_share: float = PRIORITY_SHARE):
     colorées selon leur IED (tiers). Les autres communes sont en gris clair.
     """
     cats = priority_categories(communes["IBM"], communes["IED"], top_share)
-    ied_colors = [PALETTES["IED"][0], PALETTES["IED"][2], PALETTES["IED"][4]]
+    # Tiers d'IED : on saute le jaune le plus clair, trop proche du gris
+    # des communes non prioritaires.
+    ied_colors = [PALETTES["IED"][1], PALETTES["IED"][2], PALETTES["IED"][4]]
     lookup = {-1: OTHER_COLOR, -2: MISSING_COLOR, 0: ied_colors[0], 1: ied_colors[1], 2: ied_colors[2]}
     data = communes.to_crs(LAMBERT_93).assign(_color=cats.map(lookup).to_numpy())
 
@@ -331,7 +338,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function legend() {
     var ind = document.querySelector('input[name=ind]:checked').value;
     var rows = legends[ind].map(function (r) {
-      return '<div><span style="display:inline-block;width:14px;height:10px;margin-right:6px;background:'
+      return '<div><span style="display:inline-block;width:14px;height:10px;margin-right:6px;border:1px solid {edge};background:'
         + r[0] + '"></span>' + r[1] + '</div>';
     });
     document.getElementById('ibm-legend').innerHTML = rows.join('');
@@ -402,6 +409,7 @@ def interactive_map(communes, precision: float = 0.001):
         .replace("{legends}", json.dumps(legends, ensure_ascii=False))
         .replace("{missing}", MISSING_COLOR)
         .replace("{other}", OTHER_COLOR)
+        .replace("{edge}", LEGEND_EDGE)
     )
     fmap.get_root().html.add_child(folium.Element(js))
     return fmap
