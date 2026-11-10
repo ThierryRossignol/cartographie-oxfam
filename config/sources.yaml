@@ -35,3 +35,11 @@ insee:
 
   # Table d'appartenance géographique : commune → département, EPCI, etc.
   appartenance: https://www.insee.fr/fr/statistiques/fichier/7671844/table-appartenance-geo-communes-2025.zip
+
+ign:
+  # Contours des communes (limites IGN ADMIN EXPRESS, simplifiées par
+  # Etalab pour la cartographie), géographie au 1er janvier 2025.
+  # Deux niveaux de simplification : 1000 m (cartes France entière, carte
+  # interactive) et 100 m (cartes locales, plus précises mais plus lourdes).
+  communes_1000m: https://etalab-datasets.geo.data.gouv.fr/contours-administratifs/2025/geojson/communes-1000m-2025-01-08.geojson.gz
+  communes_100m: https://etalab-datasets.geo.data.gouv.fr/contours-administratifs/2025/geojson/communes-100m-2025-01-08.geojson.gz

@@ -12,6 +12,12 @@ Fichiers produits :
     data/interim/rn_communes.csv           score et progression du RN par commune
     data/interim/socio_communes.csv        variables INSEE par commune
     data/processed/ibm_communes.csv        table fusionnée + indicateurs
+    data/outputs/carte_*.png               cartes France métropolitaine
+    data/outputs/carte_interactive.html    carte interactive (IBM / IED)
+    data/outputs/communes_indicateurs.geojson  couche pour le dashboard
+
+    python -m src.pipeline cartes     (ou : make cartes)  cartes seules,
+                                      à partir de data/processed/
 """
 
 from __future__ import annotations
@@ -20,8 +26,8 @@ import sys
 
 import pandas as pd
 
-from src import export, indicators, preprocessing
-from src.data_loader import ElectionLoader, InseeLoader
+from src import export, indicators, mapping, preprocessing
+from src.data_loader import ContoursLoader, ElectionLoader, InseeLoader
 from src.utils import load_config
 
 ABSTENTION_FILE = export.INTERIM_DIR / "abstention_communes.csv"
@@ -120,6 +126,28 @@ def run_all() -> None:
     print(f"Écrit : {export.save_csv(result, IBM_FILE)}")
 
 
+def read_results(path=IBM_FILE) -> pd.DataFrame:
+    """Relit la table des indicateurs en gardant les codes en texte."""
+    codes = {"code_commune": str, "DEP": str, "EPCI": str}
+    return pd.read_csv(path, dtype=codes).set_index("code_commune")
+
+
+def run_maps() -> None:
+    if not IBM_FILE.exists():
+        raise FileNotFoundError(f"{IBM_FILE} absent : lancer d'abord `make data`.")
+    results = read_results()
+    communes = mapping.join_indicators(ContoursLoader().communes("1000m"), results)
+    outlines = mapping.department_outlines(communes)
+    out = export.OUTPUTS_DIR
+
+    print(f"Écrit : {export.save_figure(mapping.choropleth(communes, 'IBM', outlines), out / 'carte_ibm.png')}")
+    print(f"Écrit : {export.save_figure(mapping.choropleth(communes, 'IED', outlines), out / 'carte_ied.png')}")
+    print(f"Écrit : {export.save_figure(mapping.priority_map(communes, outlines), out / 'carte_prioritaires.png')}")
+    print(f"Écrit : {export.save_html_map(mapping.interactive_map(communes), out / 'carte_interactive.html')}")
+    layer = mapping.dashboard_layer(communes)
+    print(f"Écrit : {export.save_geojson(layer, out / 'communes_indicateurs.geojson')}")
+
+
 if __name__ == "__main__":
     step = sys.argv[1] if len(sys.argv) > 1 else "all"
-    {"elections": run_elections, "all": run_all}[step]()
+    {"elections": run_elections, "all": run_all, "cartes": run_maps}[step]()

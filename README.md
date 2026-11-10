@@ -205,7 +205,8 @@ Responsable de :
 ```bash
 make install   # dépendances
 make test      # tests unitaires
-make data      # télécharge les données, fusionne, calcule l'IBM (~1 min hors téléchargements)
+make data      # télécharge les données, fusionne, calcule l'IBM et l'IED (~1 min hors téléchargements)
+make cartes    # produit les cartes à partir des résultats (~20 s)
 ```
 
 Fichiers produits :
@@ -216,6 +217,10 @@ Fichiers produits :
 | `data/interim/rn_communes.csv` | Score du RN 2022 et progression depuis 2017 par commune |
 | `data/interim/socio_communes.csv` | P, R, C, SD, Y par commune (source INSEE) |
 | `data/processed/ibm_communes.csv` | Table fusionnée + PC, D, V, J, IBM, IED |
+| `data/outputs/carte_ibm.png`, `carte_ied.png` | Cartes de France en quintiles |
+| `data/outputs/carte_prioritaires.png` | Les 20 % de communes à l'IBM le plus élevé, selon leur IED |
+| `data/outputs/carte_interactive.html` | Carte à ouvrir dans un navigateur : bascule IBM / IED, filtre « prioritaires », fiche au survol |
+| `data/outputs/communes_indicateurs.geojson` | Contours + indicateurs, pour le dashboard |
 
 Relire avec `pd.read_csv(..., dtype={"code_commune": str})` pour garder les zéros des codes INSEE.
 
@@ -223,7 +228,7 @@ Réglages (dossier `config/`) :
 
 - `weights.yaml` : pondérations des indicateurs ;
 - `elections.yaml` : scrutins utilisés pour l'abstention ;
-- `sources.yaml` : adresses des fichiers téléchargés (millésimes) ;
+- `sources.yaml` : adresses des fichiers téléchargés (millésimes, contours) ;
 - `perimetre.yaml` : territoires exclus ;
 - `normalisation.yaml` : écrêtage des valeurs extrêmes.
 
@@ -248,6 +253,7 @@ Réglages (dossier `config/`) :
 - **Normalisation** : chaque variable est écrêtée entre le 1er et le 99e centile, puis ramenée entre 0 et 1. Les scores sont relatifs : 1 = commune au plus fort besoin de la métropole.
 - **IED** : le candidat retenu est réglable dans `config/elections.yaml` (`ied.candidats`). Les exprimés sont recalculés comme la somme des voix de tous les candidats, la colonne de la source étant parfois erronée.
 - **Communes sans IED** (25) : en plus des communes sans IBM, une vingtaine de communes dont les voix par candidat valent 0 dans le fichier agrégé de data.gouv.fr pour 2017 ou 2022 (donnée manquante à la source).
+- **Cartes** : chaque indicateur est découpé en 5 classes d'effectifs égaux (quintiles), lues comme « les 20 % de communes les plus… ». Une teinte par indicateur (bleu pour l'IBM, orange pour l'IED), du clair au foncé ; gris pour les données manquantes. Contours IGN ADMIN EXPRESS simplifiés par Etalab (géographie 2025).
 - **Communes sans IBM** (10) : villages de la Meuse inhabités depuis 1916, îles sans intercommunalité, très petites communes.
 
 ---
@@ -331,7 +337,7 @@ L'objectif est qu'un utilisateur puisse lancer quelques commandes et obtenir exa
 
 ---
 
-## Sprint 6
+## Sprint 6 ✅
 
 - Cartographie
 

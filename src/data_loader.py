@@ -14,6 +14,7 @@ Les adresses des fichiers sont dans config/sources.yaml.
 
 from __future__ import annotations
 
+import gzip
 import io
 import time
 import zipfile
@@ -50,6 +51,13 @@ def check_file(path: Path, suffix: str | None = None) -> None:
             raise OSError(f"Fichier Parquet illisible ou incomplet : {path}") from e
     elif suffix == ".zip" and not zipfile.is_zipfile(path):
         raise OSError(f"Fichier ZIP illisible ou incomplet : {path}")
+    elif suffix == ".gz":
+        try:
+            with gzip.open(path) as f:
+                while f.read(1 << 20):
+                    pass
+        except (OSError, EOFError) as e:
+            raise OSError(f"Fichier gzip illisible ou incomplet : {path}") from e
 
 
 def download_file(url: str, destination: Path, timeout: int = 120, retries: int = 4) -> Path:
@@ -353,3 +361,32 @@ class InseeLoader:
     def commune_membership(self) -> pd.DataFrame:
         """Communes actuelles : CODGEO, LIBGEO, DEP, REG, EPCI…"""
         return read_insee_xlsx(self.source("appartenance").download(), "COM")
+
+
+# ----------------------------------------------------------------------------
+# IGN — contours des communes
+# ----------------------------------------------------------------------------
+
+
+class ContoursLoader:
+    """
+    Contours des communes (adresses dans config/sources.yaml, section `ign`).
+
+    Exemple :
+        communes = ContoursLoader().communes()          # GeoDataFrame, WGS84
+    """
+
+    def __init__(self, raw_dir: str | Path = RAW_DIR / "ign", urls: dict[str, str] | None = None):
+        self.raw_dir = Path(raw_dir)
+        self.urls = urls or load_config("sources")["ign"]
+
+    def communes(self, resolution: str = "1000m"):
+        """
+        Contours des communes : colonnes code, nom, departement, region,
+        epci, geometry (WGS84). `resolution` : "1000m" ou "100m".
+        """
+        import geopandas as gpd  # import local : dépendance lourde
+
+        path = CachedSource(self.urls[f"communes_{resolution}"], self.raw_dir).download()
+        # GDAL lit les fichiers gzip via le préfixe /vsigzip/.
+        return gpd.read_file(f"/vsigzip/{path}")
