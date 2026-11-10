@@ -76,7 +76,7 @@ def test_abstention_table(bv):
     table = preprocessing.abstention_by_commune(
         communes, {"A2022": "2022_pres_t1", "A2017": "2017_pres_t1"}
     )
-    assert list(table.columns) == ["libelle_commune", "code_departement", "A2022", "A2017"]
+    assert list(table.columns) == ["libelle_commune", "code_departement", "libelle_departement", "A2022", "A2017"]
     assert table.loc["01001", "A2022"] == pytest.approx(14.0)
     assert table.loc["01001", "A2017"] == pytest.approx(20.0)
     # Libellé repris de l'élection la plus récente

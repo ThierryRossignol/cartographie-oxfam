@@ -119,32 +119,30 @@ Toutes les données utilisées sont publiques et gratuites.
 # Structure du projet
 
 ```text
-ibm-france/
-
+cartographie-oxfam/
+├── app/                  dashboard Streamlit
+│   ├── app.py            point d'entrée et navigation
+│   ├── accueil.py, pages/  les pages
+│   ├── common.py         chargement des données, éléments communs
+│   └── static/           fond de carte vide
+├── config/               pondérations, scrutins, sources, périmètre, normalisation
 ├── data/
-│   ├── raw/
-│   └── processed/
-│
+│   ├── raw/              fichiers téléchargés (non versionnés)
+│   ├── interim/          tables intermédiaires
+│   ├── processed/        table finale des indicateurs
+│   └── outputs/          cartes et exports
 ├── notebooks/
-│
 ├── src/
-│   ├── data_loader/
-│   ├── preprocessing/
-│   ├── indicators/
-│   ├── mapping/
-│   └── utils/
-│
-├── config/
-│
-├── docs/
-│
+│   ├── data_loader.py    téléchargements (élections, INSEE, contours)
+│   ├── preprocessing.py  nettoyage, recalage géographique, fusion
+│   ├── indicators.py     PC, D, V, J, IBM, IED
+│   ├── mapping.py        cartes
+│   ├── dashboard.py      logique du dashboard
+│   ├── export.py         écriture des fichiers
+│   └── pipeline.py       enchaînement des étapes
 ├── tests/
-│
-├── README.md
-│
-├── requirements.txt
-│
-└── .gitignore
+├── Makefile
+└── requirements.txt
 ```
 
 ---
@@ -207,7 +205,21 @@ make install   # dépendances
 make test      # tests unitaires
 make data      # télécharge les données, fusionne, calcule l'IBM et l'IED (~1 min hors téléchargements)
 make cartes    # produit les cartes à partir des résultats (~20 s)
+make app       # lance le dashboard : http://localhost:8501
 ```
+
+## Le dashboard
+
+| Page | Contenu |
+|---|---|
+| Accueil | Chiffres clés, plus grandes communes prioritaires |
+| Carte | IBM ou IED commune par commune, filtre par département et « communes prioritaires », fiche au survol |
+| Classement | Tri, filtres (département, taille, classe d'IED), recherche, export CSV pour Excel, comparaison de communes |
+| Fiche territoire | Une commune en détail : composantes, données comparées au département et à la métropole, vote, voisines |
+| Méthodologie | Formules (lues dans `config/`), sources, choix et limites |
+
+Une fiche se partage par son adresse : `http://localhost:8501/fiche?commune=62498` (code INSEE).
+Le dashboard n'appelle aucun service externe (pas de fond de carte tiers).
 
 Fichiers produits :
 
@@ -343,7 +355,7 @@ L'objectif est qu'un utilisateur puisse lancer quelques commandes et obtenir exa
 
 ---
 
-## Sprint 7
+## Sprint 7 ✅
 
 - Dashboard interactif
 

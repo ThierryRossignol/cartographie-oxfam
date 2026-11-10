@@ -53,6 +53,14 @@ LABELS = {
 
 LAMBERT_93 = "EPSG:2154"
 
+# Part des communes considérées comme prioritaires (IBM le plus élevé).
+PRIORITY_SHARE = 0.2
+
+
+def is_priority(ibm: pd.Series, top_share: float = PRIORITY_SHARE) -> pd.Series:
+    """Vrai pour les `top_share` communes à l'IBM le plus élevé."""
+    return ibm >= ibm.quantile(1 - top_share)
+
 
 # ----------------------------------------------------------------------------
 # Classes
@@ -134,7 +142,7 @@ def department_outlines(communes, department_column: str = "DEP"):
     return data.dissolve(by=department_column).reset_index()
 
 
-def priority_categories(ibm: pd.Series, ied: pd.Series, top_share: float = 0.2) -> pd.Series:
+def priority_categories(ibm: pd.Series, ied: pd.Series, top_share: float = PRIORITY_SHARE) -> pd.Series:
     """
     Croisement IBM × IED pour préparer les campagnes.
 
@@ -143,10 +151,9 @@ def priority_categories(ibm: pd.Series, ied: pd.Series, top_share: float = 0.2) 
     le contexte : 0 = IED faible, 1 = moyen, 2 = élevé. Les autres
     communes valent -1 ; une commune prioritaire sans IED vaut -2.
     """
-    threshold = ibm.quantile(1 - top_share)
     tiers = quantile_classes(ied, k=3).codes
     out = pd.Series(-1, index=ibm.index)
-    priority = ibm >= threshold
+    priority = is_priority(ibm, top_share)
     out[priority] = tiers[priority].where(tiers[priority] >= 0, -2)
     return out.astype(int)
 
@@ -247,7 +254,7 @@ def choropleth(communes, column: str, outlines=None, k: int = 5):
     return _finish(fig, ax, handles, column, SOURCE_NOTE)
 
 
-def priority_map(communes, outlines=None, top_share: float = 0.2):
+def priority_map(communes, outlines=None, top_share: float = PRIORITY_SHARE):
     """
     Carte des communes prioritaires (IBM dans les 20 % les plus élevés),
     colorées selon leur IED (tiers). Les autres communes sont en gris clair.
@@ -349,11 +356,8 @@ def interactive_map(communes, precision: float = 0.001):
     territoire en aplat, et les fonds gratuits exigent désormais une clé.
     """
     import folium
-    import shapely
 
-    data = communes.copy()
-    data["geometry"] = shapely.set_precision(data.geometry.values, precision, mode="pointwise")
-    data = data[~data.geometry.is_empty]
+    data = lighten_geometries(communes, precision)
 
     legends = {}
     for col in ("IBM", "IED"):
@@ -364,7 +368,7 @@ def interactive_map(communes, precision: float = 0.001):
         )
         legends[col] = [[c, lab] for c, lab in zip(PALETTES[col][::-1], classes.labels()[::-1])]
         legends[col].append([MISSING_COLOR, "Donnée manquante"])
-    data["prioritaire"] = data["IBM"] >= data["IBM"].quantile(0.8)
+    data["prioritaire"] = is_priority(data["IBM"])
 
     fields = [f for f in TOOLTIP_FIELDS if f in data.columns]
     keep = ["code_commune", *fields, "c_IBM", "c_IED", "prioritaire", "geometry"]
@@ -401,6 +405,19 @@ def interactive_map(communes, precision: float = 0.001):
     )
     fmap.get_root().html.add_child(folium.Element(js))
     return fmap
+
+
+def lighten_geometries(communes, precision: float = 0.001):
+    """
+    Arrondit les coordonnées à `precision` degré (~100 m) pour l'affichage
+    web. Arrondi point par point : la topologie n'est pas recalculée, ce qui
+    évite les erreurs sur les contours déjà simplifiés.
+    """
+    import shapely
+
+    data = communes.copy()
+    data["geometry"] = shapely.set_precision(data.geometry.values, precision, mode="pointwise")
+    return data[~data.geometry.is_empty]
 
 
 def dashboard_layer(communes):

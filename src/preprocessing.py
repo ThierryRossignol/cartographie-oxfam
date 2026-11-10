@@ -57,7 +57,7 @@ def aggregate_by_commune(bv: pd.DataFrame, exclude_abroad: bool = True) -> pd.Da
 
     counts = [c for c in COUNT_COLUMNS if c in bv.columns]
     keys = ["id_election", "code_commune"]
-    labels = [c for c in ("libelle_commune", "code_departement") if c in bv.columns]
+    labels = [c for c in ("libelle_commune", "code_departement", "libelle_departement") if c in bv.columns]
 
     communes = bv.groupby(keys, as_index=False).agg(
         **{c: (c, "first") for c in labels},
@@ -91,7 +91,9 @@ def abstention_by_commune(communes: pd.DataFrame, mapping: Mapping[str, str]) ->
     rates = pd.DataFrame({col: rates[election] for col, election in mapping.items()})
 
     # Libellés : l'élection la plus récente (les identifiants commencent par l'année).
-    label_cols = [c for c in ("libelle_commune", "code_departement") if c in communes.columns]
+    label_cols = [
+        c for c in ("libelle_commune", "code_departement", "libelle_departement") if c in communes.columns
+    ]
     labels = (
         wanted.sort_values("id_election")
         .groupby("code_commune")[label_cols]
@@ -200,6 +202,12 @@ def youth_share(population: pd.DataFrame, age_min: int = 19, age_max: int = 25) 
     return _share(wide[ages].sum(axis=1), wide["_T"]).rename("Y")
 
 
+def total_population(population: pd.DataFrame) -> pd.Series:
+    """Population municipale totale (ligne AGE = `_T`), arrondie à l'unité."""
+    total = population[population["AGE"] == "_T"].groupby("GEO")["OBS_VALUE"].sum()
+    return total.round().astype("Int64").rename("population")
+
+
 def no_diploma_share(diplomas: pd.DataFrame) -> pd.Series:
     """
     SD — part (%) des 15 ans ou plus non scolarisés sans diplôme
@@ -257,11 +265,12 @@ def socio_by_commune(
 ) -> pd.DataFrame:
     """
     Table socio-économique, une ligne par commune actuelle :
-    libellé, département, EPCI, P, R, C, SD, Y (+ P_source, R_source).
+    libellé, département, EPCI, population, P, R, C, SD, Y
+    (+ P_source, R_source).
     """
     base = membership.set_index("CODGEO")[["LIBGEO", "DEP", "EPCI"]]
     base.index.name = "code_commune"
-    table = base.join(income_indicators(filosofi, membership))
+    table = base.join(total_population(population)).join(income_indicators(filosofi, membership))
     table = table.join(unemployment_rate(employment)).join(no_diploma_share(diplomas)).join(youth_share(population))
     return table.sort_index()
 

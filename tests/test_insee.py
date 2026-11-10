@@ -67,6 +67,12 @@ def test_youth_share_uses_total_row():
     assert y["A"] == pytest.approx(7.0)
 
 
+def test_total_population():
+    rows = [("A", "Y20", 10.0), ("A", "_T", 1234.4), ("B", "_T", 0.0)]
+    pop = preprocessing.total_population(long(rows, "AGE"))
+    assert pop.to_dict() == {"A": 1234, "B": 0}
+
+
 def test_no_diploma_share():
     rows = [("A", "001T100_RP", 25.0), ("A", "300_RP", 75.0), ("A", "_T", 100.0), ("B", "001T100_RP", 0.0), ("B", "_T", 0.0)]
     sd = preprocessing.no_diploma_share(long(rows, "EDUC"))
