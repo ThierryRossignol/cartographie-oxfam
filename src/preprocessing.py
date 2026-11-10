@@ -103,6 +103,50 @@ def abstention_by_commune(communes: pd.DataFrame, mapping: Mapping[str, str]) ->
     return table.sort_index()
 
 
+def vote_share_by_commune(candidates: pd.DataFrame, names: list[str], election: str) -> pd.Series:
+    """
+    Score (% des exprimés) des candidats `names` à `election`, par commune.
+
+    `candidates` : voix de TOUS les candidats par bureau de vote
+    (ElectionLoader.load_candidates sans filtre de nom). Les exprimés sont
+    recalculés comme la somme des voix de tous les candidats : la colonne
+    `exprimes` des résultats généraux vaut parfois 0 par erreur dans la
+    source (ex. Blérancourt, 2022).
+
+    Les voix des candidats listés sont additionnées ; une commune où aucun
+    d'eux n'a de voix a un score de 0. Les Français de l'étranger sont exclus.
+    """
+    votes = candidates[
+        (candidates["id_election"] == election) & (candidates["code_departement"] != ABROAD_DEPARTMENT)
+    ]
+    if votes.empty:
+        raise ValueError(f"Élection absente des résultats par candidat : {election}")
+
+    exprimes = votes.groupby("code_commune")["voix"].sum()
+    chosen = votes[votes["nom"].isin(names)].groupby("code_commune")["voix"].sum()
+    chosen = chosen.reindex(exprimes.index, fill_value=0)
+    return (chosen / exprimes.replace(0, np.nan) * 100).rename(election)
+
+
+def far_right_by_commune(
+    candidates: pd.DataFrame,
+    names: list[str],
+    election: str,
+    reference: str,
+) -> pd.DataFrame:
+    """
+    Variables de l'IED, une ligne par commune :
+    RN (score à `election`, en %) et delta_RN (RN − score à `reference`,
+    en points). Une commune absente de l'un des scrutins a un delta manquant.
+    """
+    current = vote_share_by_commune(candidates, names, election)
+    previous = vote_share_by_commune(candidates, names, reference)
+    out = pd.DataFrame({"RN": current})
+    out["delta_RN"] = out["RN"] - previous.reindex(out.index)
+    out.index.name = "code_commune"
+    return out.sort_index()
+
+
 # ----------------------------------------------------------------------------
 # Géographie : recalage des codes communes
 # ----------------------------------------------------------------------------
@@ -217,12 +261,17 @@ def socio_by_commune(
     return table.sort_index()
 
 
-def merge_tables(abstention: pd.DataFrame, socio: pd.DataFrame) -> pd.DataFrame:
+def merge_tables(socio: pd.DataFrame, *electoral: pd.DataFrame) -> pd.DataFrame:
     """
-    Fusionne abstention et socio-économie sur le code commune.
+    Fusionne la table socio-économique et les tables électorales
+    (abstention, extrême droite…) sur le code commune.
 
     On part de la table socio (communes actuelles) : une commune sans
-    résultat électoral garde des valeurs manquantes d'abstention.
+    résultat électoral garde des valeurs manquantes. Les libellés des
+    tables électorales sont ignorés (ceux de l'INSEE font foi).
     """
-    election_cols = [c for c in abstention.columns if c not in ("libelle_commune", "code_departement")]
-    return socio.join(abstention[election_cols], how="left")
+    out = socio
+    for table in electoral:
+        cols = [c for c in table.columns if c not in ("libelle_commune", "code_departement")]
+        out = out.join(table[cols], how="left")
+    return out

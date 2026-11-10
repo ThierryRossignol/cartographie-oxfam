@@ -14,6 +14,8 @@ cog_annee: 2025
 elections:
   # Données des élections agrégées (data.gouv.fr) — résultats généraux, Parquet
   resultats_generaux: https://www.data.gouv.fr/api/1/datasets/r/ff16d511-10c0-405e-9b35-511723948fce
+  # Résultats par candidat, Parquet (~160 Mo)
+  resultats_candidats: https://www.data.gouv.fr/api/1/datasets/r/4d3b35f6-0b22-4415-a24c-419a676312e2
 
 insee:
   # Filosofi 2021, base communale, géographie 2025 (pauvreté, niveau de vie)

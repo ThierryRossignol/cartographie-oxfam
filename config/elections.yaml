@@ -20,3 +20,18 @@ abstention:
   A2017: 2017_pres_t1   # Présidentielle 2017, 1er tour
   A2024: 2024_legi_t1   # Législatives 2024, 1er tour
                         # (alternative : 2024_euro_t1, participation bien plus faible)
+
+# ------------------------------------------------------------
+# IED — Indice d'Enjeu Extrême Droite
+#   RN       = score (% des exprimés) au scrutin `scrutin`
+#   delta_RN = RN − score au `scrutin_reference` (en points)
+# Les candidats sont repérés par leur nom, tel qu'écrit dans le fichier
+# des résultats par candidat (la nuance n'y est pas renseignée pour les
+# présidentielles). Pour élargir à toute l'extrême droite en 2022, on
+# pourrait ajouter "ZEMMOUR" — mais il n'existe pas en 2017, ce qui
+# gonflerait mécaniquement la progression.
+# ------------------------------------------------------------
+ied:
+  candidats: ["LE PEN"]
+  scrutin: 2022_pres_t1
+  scrutin_reference: 2017_pres_t1

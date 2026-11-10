@@ -213,8 +213,9 @@ Fichiers produits :
 | Fichier | Contenu |
 |---|---|
 | `data/interim/abstention_communes.csv` | Taux d'abstention A2022, A2017, A2024 par commune |
+| `data/interim/rn_communes.csv` | Score du RN 2022 et progression depuis 2017 par commune |
 | `data/interim/socio_communes.csv` | P, R, C, SD, Y par commune (source INSEE) |
-| `data/processed/ibm_communes.csv` | Table fusionnée + PC, D, V, J, IBM |
+| `data/processed/ibm_communes.csv` | Table fusionnée + PC, D, V, J, IBM, IED |
 
 Relire avec `pd.read_csv(..., dtype={"code_commune": str})` pour garder les zéros des codes INSEE.
 
@@ -238,11 +239,15 @@ Réglages (dossier `config/`) :
 | C | INSEE Recensement 2023 | Chômeurs / actifs de 15-64 ans (au sens du recensement) |
 | SD | INSEE Recensement 2023 | Part des 15 ans ou plus non scolarisés sans diplôme ou avec le seul CEP |
 | Y | INSEE Recensement 2023 | Part des 19-25 ans dans la population |
+| RN | Ministère de l'Intérieur via data.gouv.fr | Score de Marine Le Pen, 1er tour de la présidentielle 2022, en % des exprimés |
+| delta_RN | Ministère de l'Intérieur via data.gouv.fr | Score 2022 − score 2017 (1er tour), en points |
 
 - **Géographie** : toutes les données sont ramenées aux communes au 1er janvier 2025 grâce à la table de passage de l'INSEE (communes fusionnées regroupées, communes scindées héritant du taux de l'ancienne commune). Paris, Lyon et Marseille sont traitées comme une seule commune.
 - **Périmètre** : France métropolitaine. Les outre-mer sont exclus : leur abstention (45 à 85 % en médiane, contre 20 % en métropole) écraserait l'échelle.
 - **Secret statistique** : le taux de pauvreté n'est publié que pour ~4 300 communes (les plus grandes) et le niveau de vie médian pour ~31 000. Pour les autres, on utilise la valeur de l'intercommunalité (colonnes `P_source` et `R_source`).
 - **Normalisation** : chaque variable est écrêtée entre le 1er et le 99e centile, puis ramenée entre 0 et 1. Les scores sont relatifs : 1 = commune au plus fort besoin de la métropole.
+- **IED** : le candidat retenu est réglable dans `config/elections.yaml` (`ied.candidats`). Les exprimés sont recalculés comme la somme des voix de tous les candidats, la colonne de la source étant parfois erronée.
+- **Communes sans IED** (25) : en plus des communes sans IBM, une vingtaine de communes dont les voix par candidat valent 0 dans le fichier agrégé de data.gouv.fr pour 2017 ou 2022 (donnée manquante à la source).
 - **Communes sans IBM** (10) : villages de la Meuse inhabités depuis 1916, îles sans intercommunalité, très petites communes.
 
 ---
@@ -320,9 +325,9 @@ L'objectif est qu'un utilisateur puisse lancer quelques commandes et obtenir exa
 
 ---
 
-## Sprint 5 ✅ (IBM ; IED à venir)
+## Sprint 5 ✅
 
-- Calcul de l'IBM
+- Calcul de l'IBM et de l'IED
 
 ---
 

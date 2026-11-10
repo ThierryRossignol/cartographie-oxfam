@@ -15,7 +15,7 @@ test:  ## Lance les tests unitaires
 data:  ## Pipeline complet : téléchargements, fusion, calcul de l'IBM
 	$(PYTHON) -m src.pipeline all
 
-elections:  ## Abstention par commune uniquement
+elections:  ## Tables électorales uniquement (abstention, RN)
 	$(PYTHON) -m src.pipeline elections
 
 app:  ## Lance le dashboard Streamlit

@@ -145,3 +145,68 @@ def test_loader_downloads_when_missing(tmp_path, monkeypatch):
     loader = ElectionLoader(raw_dir=tmp_path)
     assert loader.download() == loader.path
     assert calls == [loader.path]
+
+
+# --- Extrême droite (IED) -------------------------------------------------
+
+
+def votes(election, commune, voix_par_nom, dep=None):
+    return [
+        {"id_election": election, "code_departement": dep or commune[:2], "code_commune": commune,
+         "code_bv": "0001", "nom": nom, "voix": v}
+        for nom, v in voix_par_nom.items()
+    ]
+
+
+@pytest.fixture
+def candidates():
+    rows = (
+        votes("2022_pres_t1", "01001", {"LE PEN": 30, "MACRON": 50, "ZEMMOUR": 20})
+        + votes("2017_pres_t1", "01001", {"LE PEN": 20, "MACRON": 80})
+        # Commune où la candidate n'a aucune voix
+        + votes("2022_pres_t1", "01002", {"MACRON": 10})
+        + votes("2017_pres_t1", "01002", {"MACRON": 10})
+        # Commune absente en 2017
+        + votes("2022_pres_t1", "01003", {"LE PEN": 5, "MACRON": 5})
+        # Bureau sans voix (donnée manquante dans la source)
+        + votes("2022_pres_t1", "01004", {"LE PEN": 0, "MACRON": 0})
+        # Français de l'étranger : ignorés
+        + votes("2022_pres_t1", "ZZ001", {"LE PEN": 1, "MACRON": 99}, dep="ZZ")
+    )
+    return pd.DataFrame(rows)
+
+
+def test_vote_share_uses_sum_of_all_candidates(candidates):
+    share = preprocessing.vote_share_by_commune(candidates, ["LE PEN"], "2022_pres_t1")
+    assert share["01001"] == pytest.approx(30.0)
+    assert share["01002"] == 0.0
+    assert np.isnan(share["01004"])
+    assert "ZZ001" not in share.index
+
+
+def test_vote_share_sums_several_candidates(candidates):
+    share = preprocessing.vote_share_by_commune(candidates, ["LE PEN", "ZEMMOUR"], "2022_pres_t1")
+    assert share["01001"] == pytest.approx(50.0)
+
+
+def test_far_right_by_commune(candidates):
+    out = preprocessing.far_right_by_commune(candidates, ["LE PEN"], "2022_pres_t1", "2017_pres_t1")
+    assert list(out.columns) == ["RN", "delta_RN"]
+    assert out.loc["01001", "delta_RN"] == pytest.approx(10.0)
+    assert out.loc["01002", "delta_RN"] == 0.0
+    assert out.loc["01003", "RN"] == pytest.approx(50.0)
+    assert np.isnan(out.loc["01003", "delta_RN"])
+
+
+def test_vote_share_unknown_election(candidates):
+    with pytest.raises(ValueError, match="1995_pres_t1"):
+        preprocessing.vote_share_by_commune(candidates, ["LE PEN"], "1995_pres_t1")
+
+
+def test_loader_candidates_filters(tmp_path, candidates):
+    loader = ElectionLoader(raw_dir=tmp_path)
+    candidates.assign(no_panneau=1, prenom="X").to_parquet(loader.candidates_path)
+    df = loader.load_candidates(["2017_pres_t1"], names=["LE PEN"])
+    assert set(df["id_election"]) == {"2017_pres_t1"} and set(df["nom"]) == {"LE PEN"}
+    with pytest.raises(ValueError, match="DUPONT"):
+        loader.load_candidates(["2017_pres_t1"], names=["DUPONT"])

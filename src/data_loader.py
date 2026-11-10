@@ -129,6 +129,7 @@ class ElectionLoader(CachedSource):
     """
 
     FILENAME = "general_results.parquet"
+    CANDIDATES_FILENAME = "candidats_results.parquet"
 
     COLUMNS = [
         "id_election",
@@ -143,8 +144,31 @@ class ElectionLoader(CachedSource):
         "exprimes",
     ]
 
-    def __init__(self, raw_dir: str | Path = RAW_DIR / "elections", url: str | None = None):
-        super().__init__(url or load_config("sources")["elections"]["resultats_generaux"], raw_dir)
+    CANDIDATE_COLUMNS = [
+        "id_election",
+        "code_departement",
+        "code_commune",
+        "code_bv",
+        "no_panneau",
+        "nom",
+        "prenom",
+        "voix",
+    ]
+
+    def __init__(
+        self,
+        raw_dir: str | Path = RAW_DIR / "elections",
+        url: str | None = None,
+        candidates_url: str | None = None,
+    ):
+        sources = load_config("sources")["elections"]
+        super().__init__(url or sources["resultats_generaux"], raw_dir)
+        self.candidates_url = candidates_url or sources["resultats_candidats"]
+
+    @property
+    def candidates_path(self) -> Path:
+        """Chemin de la copie locale des résultats par candidat."""
+        return self.raw_dir / self.CANDIDATES_FILENAME
 
     @property
     def path(self) -> Path:
@@ -178,6 +202,34 @@ class ElectionLoader(CachedSource):
                     f"Élection(s) introuvable(s) : {missing}. "
                     "Voir ElectionLoader().available_elections()."
                 )
+        return df
+
+    def load_candidates(self, elections: list[str], names: list[str] | None = None) -> pd.DataFrame:
+        """
+        Voix par candidat et par bureau de vote.
+
+        - `elections` : identifiants d'élection à garder.
+        - `names` : noms de candidats à garder (ex. ["LE PEN"]), en
+          majuscules comme dans le fichier ; `None` garde tout le monde.
+
+        Le fichier (~160 Mo) est téléchargé au premier appel.
+        """
+        path = self.candidates_path
+        if not path.exists():
+            download_file(self.candidates_url, path)
+
+        filters = [("id_election", "in", list(elections))]
+        if names:
+            filters.append(("nom", "in", list(names)))
+        df = pd.read_parquet(path, columns=self.CANDIDATE_COLUMNS, filters=filters)
+
+        missing_elections = sorted(set(elections) - set(df["id_election"]))
+        missing_names = sorted(set(names or []) - set(df["nom"]))
+        if missing_elections or missing_names:
+            raise ValueError(
+                "Introuvable dans les résultats par candidat "
+                f"(élections : {missing_elections or '-'} ; candidats : {missing_names or '-'})"
+            )
         return df
 
 

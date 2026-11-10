@@ -108,7 +108,7 @@ def test_merge_tables_keeps_current_communes():
         {"libelle_commune": ["A", "X"], "code_departement": ["01", "01"], "A2022": [20.0, 30.0]},
         index=pd.Index(["01001", "01999"], name="code_commune"),
     )
-    merged = preprocessing.merge_tables(abst, socio)
+    merged = preprocessing.merge_tables(socio, abst)
     assert merged.index.tolist() == ["01001", "01002"]
     assert list(merged.columns) == ["LIBGEO", "P", "A2022"]
     assert np.isnan(merged.loc["01002", "A2022"])
