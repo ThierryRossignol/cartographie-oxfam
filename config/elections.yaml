@@ -23,15 +23,25 @@ abstention:
 
 # ------------------------------------------------------------
 # IED — Indice d'Enjeu Extrême Droite
-#   RN       = score (% des exprimés) au scrutin `scrutin`
-#   delta_RN = RN − score au `scrutin_reference` (en points)
+#   RN       = score cumulé (% des exprimés) des `candidats` au `scrutin`
+#   delta_RN = RN − score cumulé des `candidats_reference` au
+#              `scrutin_reference` (en points)
+#
 # Les candidats sont repérés par leur nom, tel qu'écrit dans le fichier
 # des résultats par candidat (la nuance n'y est pas renseignée pour les
-# présidentielles). Pour élargir à toute l'extrême droite en 2022, on
-# pourrait ajouter "ZEMMOUR" — mais il n'existe pas en 2017, ce qui
-# gonflerait mécaniquement la progression.
+# présidentielles). Liste des noms disponibles :
+#   python -c "from src.data_loader import ElectionLoader; \
+#     print(sorted(ElectionLoader().load_candidates(['2022_pres_t1']).nom.unique()))"
+#
+# Élargir à toute l'extrême droite (à décider, pas activé) :
+#   candidats: ["LE PEN", "ZEMMOUR"]
+#   candidats_reference: ["LE PEN"]          # ou ["LE PEN", "DUPONT-AIGNAN"]
+# Les deux listes sont indépendantes pour que la progression compare des
+# périmètres choisis en connaissance de cause (Zemmour n'existe pas en 2017).
+# Si `candidats_reference` est absent, la liste `candidats` est reprise.
 # ------------------------------------------------------------
 ied:
   candidats: ["LE PEN"]
   scrutin: 2022_pres_t1
+  candidats_reference: ["LE PEN"]
   scrutin_reference: 2017_pres_t1

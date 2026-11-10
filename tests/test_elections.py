@@ -210,3 +210,18 @@ def test_loader_candidates_filters(tmp_path, candidates):
     assert set(df["id_election"]) == {"2017_pres_t1"} and set(df["nom"]) == {"LE PEN"}
     with pytest.raises(ValueError, match="DUPONT"):
         loader.load_candidates(["2017_pres_t1"], names=["DUPONT"])
+
+
+def test_far_right_different_reference_lists(candidates):
+    """Prêt pour Zemmour : 2022 = LE PEN + ZEMMOUR, comparé à LE PEN seule en 2017."""
+    out = preprocessing.far_right_by_commune(
+        candidates, ["LE PEN", "ZEMMOUR"], "2022_pres_t1", "2017_pres_t1", reference_names=["LE PEN"]
+    )
+    assert out.loc["01001", "RN"] == pytest.approx(50.0)
+    assert out.loc["01001", "delta_RN"] == pytest.approx(30.0)
+
+
+def test_ied_config_is_le_pen_only_for_now():
+    ied = load_config("elections")["ied"]
+    assert ied["candidats"] == ["LE PEN"]
+    assert ied["candidats_reference"] == ["LE PEN"]

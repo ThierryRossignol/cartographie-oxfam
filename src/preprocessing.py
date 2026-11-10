@@ -133,14 +133,19 @@ def far_right_by_commune(
     names: list[str],
     election: str,
     reference: str,
+    reference_names: list[str] | None = None,
 ) -> pd.DataFrame:
     """
     Variables de l'IED, une ligne par commune :
-    RN (score à `election`, en %) et delta_RN (RN − score à `reference`,
-    en points). Une commune absente de l'un des scrutins a un delta manquant.
+    RN (score cumulé de `names` à `election`, en %) et delta_RN (RN − score
+    cumulé de `reference_names` à `reference`, en points).
+
+    `reference_names` permet de comparer des listes différentes (ex.
+    LE PEN + ZEMMOUR en 2022 contre LE PEN en 2017) ; par défaut, `names`.
+    Une commune absente de l'un des scrutins a un delta manquant.
     """
     current = vote_share_by_commune(candidates, names, election)
-    previous = vote_share_by_commune(candidates, names, reference)
+    previous = vote_share_by_commune(candidates, reference_names or names, reference)
     out = pd.DataFrame({"RN": current})
     out["delta_RN"] = out["RN"] - previous.reindex(out.index)
     out.index.name = "code_commune"

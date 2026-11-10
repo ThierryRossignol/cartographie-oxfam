@@ -53,13 +53,16 @@ def build_elections(insee: InseeLoader | None = None) -> tuple[pd.DataFrame, pd.
     abstention = preprocessing.abstention_by_commune(communes, mapping)
 
     # Tous les candidats : leurs voix servent à recalculer les exprimés.
+    names = ied["candidats"]
+    reference_names = ied.get("candidats_reference") or names
     candidates = loader.load_candidates([ied["scrutin"], ied["scrutin_reference"]])
-    missing = sorted(set(ied["candidats"]) - set(candidates["nom"]))
-    if missing:
-        raise ValueError(f"Candidat(s) introuvable(s) : {missing}")
+    for election, wanted in [(ied["scrutin"], names), (ied["scrutin_reference"], reference_names)]:
+        found = set(candidates.loc[candidates["id_election"] == election, "nom"])
+        if missing := sorted(set(wanted) - found):
+            raise ValueError(f"Candidat(s) introuvable(s) à {election} : {missing}")
     candidates = preprocessing.harmonize_communes(candidates, passage)
     far_right = preprocessing.far_right_by_commune(
-        candidates, ied["candidats"], ied["scrutin"], ied["scrutin_reference"]
+        candidates, names, ied["scrutin"], ied["scrutin_reference"], reference_names
     )
 
     excluded = _excluded_prefixes()
