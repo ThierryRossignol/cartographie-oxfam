@@ -200,6 +200,53 @@ Responsable de :
 
 ---
 
+# Utilisation
+
+```bash
+make install   # dépendances
+make test      # tests unitaires
+make data      # télécharge les données, fusionne, calcule l'IBM (~1 min hors téléchargements)
+```
+
+Fichiers produits :
+
+| Fichier | Contenu |
+|---|---|
+| `data/interim/abstention_communes.csv` | Taux d'abstention A2022, A2017, A2024 par commune |
+| `data/interim/socio_communes.csv` | P, R, C, SD, Y par commune (source INSEE) |
+| `data/processed/ibm_communes.csv` | Table fusionnée + PC, D, V, J, IBM |
+
+Relire avec `pd.read_csv(..., dtype={"code_commune": str})` pour garder les zéros des codes INSEE.
+
+Réglages (dossier `config/`) :
+
+- `weights.yaml` : pondérations des indicateurs ;
+- `elections.yaml` : scrutins utilisés pour l'abstention ;
+- `sources.yaml` : adresses des fichiers téléchargés (millésimes) ;
+- `perimetre.yaml` : territoires exclus ;
+- `normalisation.yaml` : écrêtage des valeurs extrêmes.
+
+---
+
+# Choix méthodologiques
+
+| Variable | Source | Définition |
+|---|---|---|
+| A2022, A2017, A2024 | Ministère de l'Intérieur via data.gouv.fr | Abstentions / inscrits, 1er tour (présidentielles 2022 et 2017, législatives 2024) |
+| P | INSEE Filosofi 2021 | Taux de pauvreté au seuil de 60 % |
+| R | INSEE Filosofi 2021 | Niveau de vie médian (inversé : faible revenu = besoin fort) |
+| C | INSEE Recensement 2023 | Chômeurs / actifs de 15-64 ans (au sens du recensement) |
+| SD | INSEE Recensement 2023 | Part des 15 ans ou plus non scolarisés sans diplôme ou avec le seul CEP |
+| Y | INSEE Recensement 2023 | Part des 19-25 ans dans la population |
+
+- **Géographie** : toutes les données sont ramenées aux communes au 1er janvier 2025 grâce à la table de passage de l'INSEE (communes fusionnées regroupées, communes scindées héritant du taux de l'ancienne commune). Paris, Lyon et Marseille sont traitées comme une seule commune.
+- **Périmètre** : France métropolitaine. Les outre-mer sont exclus : leur abstention (45 à 85 % en médiane, contre 20 % en métropole) écraserait l'échelle.
+- **Secret statistique** : le taux de pauvreté n'est publié que pour ~4 300 communes (les plus grandes) et le niveau de vie médian pour ~31 000. Pour les autres, on utilise la valeur de l'intercommunalité (colonnes `P_source` et `R_source`).
+- **Normalisation** : chaque variable est écrêtée entre le 1er et le 99e centile, puis ramenée entre 0 et 1. Les scores sont relatifs : 1 = commune au plus fort besoin de la métropole.
+- **Communes sans IBM** (10) : villages de la Meuse inhabités depuis 1916, îles sans intercommunalité, très petites communes.
+
+---
+
 # Philosophie du projet
 
 Le projet suit quelques principes simples.
@@ -245,7 +292,7 @@ L'objectif est qu'un utilisateur puisse lancer quelques commandes et obtenir exa
 
 # Feuille de route
 
-## Sprint 1
+## Sprint 1 ✅
 
 - Architecture du projet
 - Documentation
@@ -253,7 +300,7 @@ L'objectif est qu'un utilisateur puisse lancer quelques commandes et obtenir exa
 
 ---
 
-## Sprint 2
+## Sprint 2 ✅
 
 - Connecteur Élections
 - Téléchargement automatique
@@ -261,19 +308,19 @@ L'objectif est qu'un utilisateur puisse lancer quelques commandes et obtenir exa
 
 ---
 
-## Sprint 3
+## Sprint 3 ✅
 
 - Connecteurs INSEE
 
 ---
 
-## Sprint 4
+## Sprint 4 ✅
 
 - Fusion des données
 
 ---
 
-## Sprint 5
+## Sprint 5 ✅ (IBM ; IED à venir)
 
 - Calcul de l'IBM
 

@@ -1,0 +1,17 @@
+# ============================================================
+# config/normalisation.yaml
+# Mise à l'échelle des variables avant pondération.
+#
+# Chaque variable est ramenée sur [0, 1] (min-max). Dans les très petites
+# communes, les taux peuvent être extrêmes (ex. 100 % de chômage pour
+# 2 actifs) : une seule valeur aberrante écraserait alors les écarts entre
+# toutes les autres communes.
+#
+# On écrête donc chaque variable entre deux quantiles avant la mise à
+# l'échelle : toutes les communes au-delà du 99e centile reçoivent 1,
+# toutes celles en deçà du 1er centile reçoivent 0.
+# Mettre 0 et 1 pour désactiver l'écrêtage.
+# ============================================================
+
+quantile_bas: 0.01
+quantile_haut: 0.99

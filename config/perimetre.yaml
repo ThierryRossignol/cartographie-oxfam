@@ -1,0 +1,18 @@
+# ============================================================
+# config/perimetre.yaml
+# Territoire sur lequel les indicateurs sont calculés.
+#
+# Les scores IBM / IED sont relatifs (normalisation min-max sur l'ensemble
+# des communes) : un groupe de territoires aux valeurs très différentes
+# écrase les écarts entre toutes les autres communes.
+#
+# Les outre-mer ont une abstention médiane de 45 à 85 % contre 20 % en
+# métropole : ils sont exclus. Un calcul séparé pour les DROM pourra être
+# ajouté plus tard.
+# ============================================================
+
+# Communes exclues selon le début de leur code INSEE.
+exclure_codes_commune:
+  - "97"   # Guadeloupe, Martinique, Guyane, La Réunion, Mayotte,
+           # Saint-Pierre-et-Miquelon, Saint-Martin, Saint-Barthélemy
+  - "98"   # Nouvelle-Calédonie, Polynésie française, Wallis-et-Futuna

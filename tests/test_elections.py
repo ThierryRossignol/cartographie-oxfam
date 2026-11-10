@@ -91,6 +91,14 @@ def test_abstention_table_unknown_election(bv):
         preprocessing.abstention_by_commune(communes, {"A2024": "2024_legi_t1"})
 
 
+def test_filter_perimeter_column_and_index():
+    df = pd.DataFrame({"code_commune": ["01001", "97101", "98801", "2A004"], "x": range(4)})
+    kept = preprocessing.filter_perimeter(df, ["97", "98"])
+    assert kept["code_commune"].tolist() == ["01001", "2A004"]
+    by_index = preprocessing.filter_perimeter(df.set_index("code_commune"), ["97", "98"])
+    assert by_index.index.tolist() == ["01001", "2A004"]
+
+
 def test_elections_config_matches_weights():
     """Chaque scrutin d'abstention correspond à une variable de PC."""
     from src.utils import load_weights

@@ -58,19 +58,28 @@ def check_weights(weights: Mapping[str, float], name: str = "pondérations") -> 
         raise ValueError(f"{name} : la somme des poids vaut {total}, au lieu de 1.")
 
 
-def min_max_normalize(series: pd.Series, invert: bool = False) -> pd.Series:
+def min_max_normalize(
+    series: pd.Series,
+    invert: bool = False,
+    clip: tuple[float, float] | None = None,
+) -> pd.Series:
     """
     Ramène une série sur l'intervalle [0, 1] (min-max).
 
     - `invert=True` inverse l'échelle (1 = valeur la plus basse), utile pour
       les variables où une valeur faible traduit un besoin plus fort
       (ex. revenu médian).
+    - `clip=(0.01, 0.99)` écrête d'abord la série entre ces deux quantiles,
+      pour que quelques valeurs extrêmes n'écrasent pas toutes les autres.
     - Les valeurs manquantes restent manquantes.
     - Une série constante est ramenée à 0 (aucune différence entre territoires).
     """
     series = pd.to_numeric(series, errors="raise").astype(float)
-    lo, hi = series.min(), series.max()
+    if clip is not None:
+        lo_q, hi_q = clip
+        series = series.clip(series.quantile(lo_q), series.quantile(hi_q))
 
+    lo, hi = series.min(), series.max()
     if pd.isna(lo) or lo == hi:
         normalized = series.where(series.isna(), 0.0)
     else:

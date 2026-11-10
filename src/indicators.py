@@ -29,6 +29,9 @@ entre 0 et 1 : 1 = besoin (ou enjeu) le plus fort parmi les communes
 étudiées. Les scores sont donc relatifs à l'ensemble des communes passées
 en entrée : la normalisation min-max doit être faite sur tout le territoire
 étudié, pas commune par commune.
+
+Avant la mise à l'échelle, chaque variable peut être écrêtée entre deux
+quantiles (paramètre `clip`, voir config/normalisation.yaml).
 """
 
 from __future__ import annotations
@@ -37,18 +40,25 @@ from collections.abc import Mapping
 
 import pandas as pd
 
-from src.utils import check_weights, load_weights, min_max_normalize, weighted_sum
+from src.utils import check_weights, load_config, load_weights, min_max_normalize, weighted_sum
 
 Weights = Mapping[str, float]
+Clip = tuple[float, float] | None
 
 # Variables pour lesquelles une valeur élevée traduit un besoin plus faible.
 INVERTED_VARIABLES = {"R"}
 
 
-def _normalize_columns(df: pd.DataFrame, columns) -> pd.DataFrame:
+def default_clip() -> Clip:
+    """Quantiles d'écrêtage lus dans config/normalisation.yaml."""
+    cfg = load_config("normalisation")
+    return (cfg["quantile_bas"], cfg["quantile_haut"])
+
+
+def _normalize_columns(df: pd.DataFrame, columns, clip: Clip = None) -> pd.DataFrame:
     """Normalise chaque colonne sur [0, 1], en inversant celles qui doivent l'être."""
     return pd.DataFrame(
-        {col: min_max_normalize(df[col], invert=col in INVERTED_VARIABLES) for col in columns},
+        {col: min_max_normalize(df[col], invert=col in INVERTED_VARIABLES, clip=clip) for col in columns},
         index=df.index,
     )
 
@@ -66,12 +76,12 @@ def compute_pc(df: pd.DataFrame, weights: Weights) -> pd.Series:
     return weighted_sum(df, weights).rename("PC")
 
 
-def compute_d(pc: pd.Series) -> pd.Series:
+def compute_d(pc: pd.Series, clip: Clip = None) -> pd.Series:
     """Déficit Démocratique : PC normalisée sur [0, 1]."""
-    return min_max_normalize(pc).rename("D")
+    return min_max_normalize(pc, clip=clip).rename("D")
 
 
-def compute_v(df: pd.DataFrame, weights: Weights) -> pd.Series:
+def compute_v(df: pd.DataFrame, weights: Weights, clip: Clip = None) -> pd.Series:
     """
     Vulnérabilité socio-économique.
 
@@ -81,13 +91,13 @@ def compute_v(df: pd.DataFrame, weights: Weights) -> pd.Series:
     inversé (un revenu faible correspond à une vulnérabilité forte).
     """
     check_weights(weights, "V")
-    return weighted_sum(_normalize_columns(df, weights), weights).rename("V")
+    return weighted_sum(_normalize_columns(df, weights, clip), weights).rename("V")
 
 
-def compute_j(df: pd.DataFrame, weights: Weights) -> pd.Series:
+def compute_j(df: pd.DataFrame, weights: Weights, clip: Clip = None) -> pd.Series:
     """Public Prioritaire Jeunes : J = Y normalisée."""
     check_weights(weights, "J")
-    return weighted_sum(_normalize_columns(df, weights), weights).rename("J")
+    return weighted_sum(_normalize_columns(df, weights, clip), weights).rename("J")
 
 
 def compute_ibm(components: pd.DataFrame, weights: Weights) -> pd.Series:
@@ -102,31 +112,41 @@ def compute_ibm(components: pd.DataFrame, weights: Weights) -> pd.Series:
     return weighted_sum(components, weights).rename("IBM")
 
 
-def compute_ied(df: pd.DataFrame, weights: Weights) -> pd.Series:
+def compute_ied(df: pd.DataFrame, weights: Weights, clip: Clip = None) -> pd.Series:
     """
     Indice d'Enjeu Extrême Droite (indépendant de l'IBM).
 
     IED = 0,70 RN + 0,30 ΔRN, chaque variable normalisée sur [0, 1].
     """
     check_weights(weights, "IED")
-    return weighted_sum(_normalize_columns(df, weights), weights).rename("IED")
+    return weighted_sum(_normalize_columns(df, weights, clip), weights).rename("IED")
 
 
-def compute_all(df: pd.DataFrame, weights: Mapping[str, Weights] | None = None) -> pd.DataFrame:
+def compute_all(
+    df: pd.DataFrame,
+    weights: Mapping[str, Weights] | None = None,
+    clip: Clip | str = "config",
+) -> pd.DataFrame:
     """
     Calcule l'ensemble des indicateurs et les ajoute à une copie de `df`.
 
-    Colonnes ajoutées : PC, D, V, J, IBM, IED.
-    Si `weights` n'est pas fourni, les poids sont lus dans config/weights.yaml.
+    Colonnes ajoutées : PC, D, V, J, IBM, et IED si les colonnes RN et
+    delta_RN sont présentes.
+    - `weights` : par défaut, lus dans config/weights.yaml.
+    - `clip` : quantiles d'écrêtage ; par défaut ceux de
+      config/normalisation.yaml, `None` pour ne pas écrêter.
     """
     if weights is None:
         weights = load_weights()
+    if clip == "config":
+        clip = default_clip()
 
     out = df.copy()
     out["PC"] = compute_pc(out, weights["PC"])
-    out["D"] = compute_d(out["PC"])
-    out["V"] = compute_v(out, weights["V"])
-    out["J"] = compute_j(out, weights["J"])
+    out["D"] = compute_d(out["PC"], clip)
+    out["V"] = compute_v(out, weights["V"], clip)
+    out["J"] = compute_j(out, weights["J"], clip)
     out["IBM"] = compute_ibm(out[["D", "V", "J"]], weights["IBM"])
-    out["IED"] = compute_ied(out, weights["IED"])
+    if all(col in out.columns for col in weights["IED"]):
+        out["IED"] = compute_ied(out, weights["IED"], clip)
     return out
