@@ -9,12 +9,13 @@ l'affichage et la mise en cache.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from src import mapping
-from src.pipeline import IBM_FILE, read_results
+from src.pipeline import PUBLISHED_CONTOURS, read_results, results_path
 
 INDICATORS = {
     "IBM": "Indice de Besoin de Mobilisation",
@@ -64,7 +65,22 @@ def election_label(election_id: str) -> str:
 
 
 def results_available() -> bool:
-    return IBM_FILE.exists()
+    """Vrai si des résultats existent (calculés localement ou publiés)."""
+    return results_path() is not None
+
+
+def load_contours():
+    """
+    Contours des communes : ceux téléchargés localement s'ils existent,
+    sinon ceux du paquet publié (dashboard en ligne).
+    """
+    from src.data_loader import ContoursLoader
+
+    loader = ContoursLoader()
+    local = loader.raw_dir / Path(loader.urls["communes_1000m"].split("/")[-1])
+    if not local.exists() and PUBLISHED_CONTOURS.exists():
+        return loader.communes(path=PUBLISHED_CONTOURS)
+    return loader.communes("1000m")
 
 
 def enrich(results: pd.DataFrame) -> pd.DataFrame:

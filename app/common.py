@@ -32,10 +32,8 @@ def results() -> pd.DataFrame:
 @st.cache_resource(show_spinner="Chargement des contours des communes…")
 def communes_geo():
     """Contours (simplifiés pour le web) + indicateurs enrichis."""
-    from src.data_loader import ContoursLoader
-
     df = results()
-    geo = mapping.join_indicators(ContoursLoader().communes("1000m"), df)
+    geo = mapping.join_indicators(dashboard.load_contours(), df)
     return mapping.lighten_geometries(geo)
 
 

@@ -229,6 +229,21 @@ make cartes    # produit les cartes à partir des résultats (~20 s)
 make app       # lance le dashboard : http://localhost:8501
 ```
 
+## Mise en ligne (Streamlit Community Cloud)
+
+Le dashboard en ligne ne relance pas le pipeline : il lit `data/published/`
+(résultats en Parquet et contours des communes, ~6,5 Mo, versionnés dans git).
+Après un nouveau calcul (`make data`), mettre ce paquet à jour puis pousser :
+
+```bash
+python -m src.pipeline publier      # ou : make publier
+git add data/published && git commit -m "Mise à jour des données publiées" && git push
+```
+
+Déploiement : sur https://share.streamlit.io, « Create app » → dépôt `ThierryRossignol/cartographie-oxfam`,
+branche voulue, fichier principal `app/app.py`, Python 3.12 dans « Advanced settings ».
+Les dépendances en ligne sont celles de `app/requirements.txt` (allégées).
+
 ## Le dashboard
 
 | Page | Contenu |

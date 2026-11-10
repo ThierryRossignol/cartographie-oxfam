@@ -18,6 +18,8 @@ Fichiers produits :
 
     python -m src.pipeline cartes     (ou : make cartes)  cartes seules,
                                       à partir de data/processed/
+    python -m src.pipeline publier    (ou : make publier) met à jour
+                                      data/published/ pour le dashboard en ligne
 """
 
 from __future__ import annotations
@@ -34,6 +36,12 @@ ABSTENTION_FILE = export.INTERIM_DIR / "abstention_communes.csv"
 RN_FILE = export.INTERIM_DIR / "rn_communes.csv"
 SOCIO_FILE = export.INTERIM_DIR / "socio_communes.csv"
 IBM_FILE = export.PROCESSED_DIR / "ibm_communes.csv"
+
+# Paquet versionné dans git, utilisé par le dashboard en ligne
+# (Streamlit Community Cloud), qui ne peut pas relancer tout le pipeline.
+PUBLISHED_DIR = export.ROOT_DIR / "data" / "published"
+PUBLISHED_RESULTS = PUBLISHED_DIR / "ibm_communes.parquet"
+PUBLISHED_CONTOURS = PUBLISHED_DIR / "communes-1000m.geojson.gz"
 
 
 def _excluded_prefixes() -> list[str]:
@@ -126,10 +134,41 @@ def run_all() -> None:
     print(f"Écrit : {export.save_csv(result, IBM_FILE)}")
 
 
-def read_results(path=IBM_FILE) -> pd.DataFrame:
+def results_path():
+    """
+    Table des indicateurs à utiliser : celle calculée localement
+    (data/processed/) si elle existe, sinon le paquet publié
+    (data/published/), ou None si aucune n'existe.
+    """
+    for path in (IBM_FILE, PUBLISHED_RESULTS):
+        if path.exists():
+            return path
+    return None
+
+
+def read_results(path=None) -> pd.DataFrame:
     """Relit la table des indicateurs en gardant les codes en texte."""
+    path = path or results_path() or IBM_FILE
+    if str(path).endswith(".parquet"):
+        return pd.read_parquet(path)
     codes = {"code_commune": str, "DEP": str, "EPCI": str}
     return pd.read_csv(path, dtype=codes).set_index("code_commune")
+
+
+def run_publish() -> None:
+    """
+    Met à jour data/published/ (à versionner) à partir des résultats
+    locaux : table des indicateurs (Parquet) et contours des communes.
+    """
+    import shutil
+
+    if not IBM_FILE.exists():
+        raise FileNotFoundError(f"{IBM_FILE} absent : lancer d'abord `make data`.")
+    PUBLISHED_DIR.mkdir(parents=True, exist_ok=True)
+    read_results(IBM_FILE).to_parquet(PUBLISHED_RESULTS)
+    shutil.copyfile(ContoursLoader().source_path("1000m"), PUBLISHED_CONTOURS)
+    for path in (PUBLISHED_RESULTS, PUBLISHED_CONTOURS):
+        print(f"Écrit : {path} ({path.stat().st_size / 1e6:.1f} Mo)")
 
 
 def run_maps() -> None:
@@ -150,4 +189,4 @@ def run_maps() -> None:
 
 if __name__ == "__main__":
     step = sys.argv[1] if len(sys.argv) > 1 else "all"
-    {"elections": run_elections, "all": run_all, "cartes": run_maps}[step]()
+    {"elections": run_elections, "all": run_all, "cartes": run_maps, "publier": run_publish}[step]()

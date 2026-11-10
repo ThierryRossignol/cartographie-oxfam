@@ -46,7 +46,7 @@ if selected:
 highlight = set(shown.index) if only_priority else None
 
 
-@st.cache_data(show_spinner="Préparation de la carte…", max_entries=8)
+@st.cache_data(show_spinner="Préparation de la carte…", max_entries=4)
 def features(indicator: str, deps_key: tuple, only_priority: bool):
     return dashboard.map_features(geo, indicator, highlight)
 

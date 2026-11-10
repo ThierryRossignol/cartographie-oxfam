@@ -380,15 +380,25 @@ class ContoursLoader:
         self.raw_dir = Path(raw_dir)
         self.urls = urls or load_config("sources")["ign"]
 
-    def communes(self, resolution: str = "1000m"):
+    def source_path(self, resolution: str = "1000m") -> Path:
+        """Chemin local du fichier de contours (téléchargé si besoin)."""
+        return CachedSource(self.urls[f"communes_{resolution}"], self.raw_dir).download()
+
+    def communes(self, resolution: str = "1000m", path: str | Path | None = None):
         """
         Contours des communes : colonnes code, nom, departement, region,
         epci, geometry (WGS84). `resolution` : "1000m" ou "100m".
+        `path` : lire ce fichier .geojson.gz plutôt que la source configurée.
         """
-        import geopandas as gpd  # import local : dépendance lourde
+        return read_geojson_gz(path or self.source_path(resolution))
 
-        path = CachedSource(self.urls[f"communes_{resolution}"], self.raw_dir).download()
-        # Décompression en Python plutôt que via le préfixe GDAL /vsigzip/,
-        # peu fiable avec les chemins Windows (C:\...).
-        with gzip.open(path, "rb") as f:
-            return gpd.read_file(io.BytesIO(f.read()))
+
+def read_geojson_gz(path: str | Path):
+    """
+    Lit un GeoJSON compressé (gzip). Décompression en Python plutôt que via
+    le préfixe GDAL /vsigzip/, peu fiable avec les chemins Windows.
+    """
+    import geopandas as gpd  # import local : dépendance lourde
+
+    with gzip.open(path, "rb") as f:
+        return gpd.read_file(io.BytesIO(f.read()))
