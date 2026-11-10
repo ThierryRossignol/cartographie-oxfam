@@ -119,32 +119,30 @@ Toutes les données utilisées sont publiques et gratuites.
 # Structure du projet
 
 ```text
-ibm-france/
-
+cartographie-oxfam/
+├── app/                  dashboard Streamlit
+│   ├── app.py            point d'entrée et navigation
+│   ├── accueil.py, pages/  les pages
+│   ├── common.py         chargement des données, éléments communs
+│   └── static/           fond de carte vide
+├── config/               pondérations, scrutins, sources, périmètre, normalisation
 ├── data/
-│   ├── raw/
-│   └── processed/
-│
+│   ├── raw/              fichiers téléchargés (non versionnés)
+│   ├── interim/          tables intermédiaires
+│   ├── processed/        table finale des indicateurs
+│   └── outputs/          cartes et exports
 ├── notebooks/
-│
 ├── src/
-│   ├── data_loader/
-│   ├── preprocessing/
-│   ├── indicators/
-│   ├── mapping/
-│   └── utils/
-│
-├── config/
-│
-├── docs/
-│
+│   ├── data_loader.py    téléchargements (élections, INSEE, contours)
+│   ├── preprocessing.py  nettoyage, recalage géographique, fusion
+│   ├── indicators.py     PC, D, V, J, IBM, IED
+│   ├── mapping.py        cartes
+│   ├── dashboard.py      logique du dashboard
+│   ├── export.py         écriture des fichiers
+│   └── pipeline.py       enchaînement des étapes
 ├── tests/
-│
-├── README.md
-│
-├── requirements.txt
-│
-└── .gitignore
+├── Makefile
+└── requirements.txt
 ```
 
 ---
@@ -200,6 +198,131 @@ Responsable de :
 
 ---
 
+# Démarrage rapide
+
+Prérequis : Python 3.11 ou plus récent, Git, une connexion internet (~600 Mo de données publiques
+téléchargées au premier lancement, puis gardées dans `data/raw/`).
+
+```bash
+git clone https://github.com/ThierryRossignol/cartographie-oxfam.git
+cd cartographie-oxfam
+python -m venv .venv
+.venv\Scripts\activate          # Windows   (macOS / Linux : source .venv/bin/activate)
+python -m pip install -r requirements.txt
+python -m src.pipeline all       # téléchargements + calcul de l'IBM et de l'IED (quelques minutes)
+python -m src.pipeline cartes    # cartes PNG et carte interactive (facultatif)
+python -m streamlit run app/app.py
+```
+
+Le dashboard s'ouvre dans le navigateur à l'adresse http://localhost:8501.
+Sous macOS / Linux, les raccourcis `make install`, `make data`, `make cartes` et `make app` font la même chose.
+
+---
+
+# Utilisation
+
+```bash
+make install   # dépendances
+make test      # tests unitaires
+make data      # télécharge les données, fusionne, calcule l'IBM et l'IED (~1 min hors téléchargements)
+make cartes    # produit les cartes à partir des résultats (~20 s)
+make app       # lance le dashboard : http://localhost:8501
+```
+
+## Mise en ligne (Streamlit Community Cloud)
+
+Le dashboard en ligne ne relance pas le pipeline : il lit `data/published/`
+(résultats en Parquet et contours des communes, ~6,5 Mo, versionnés dans git).
+Après un nouveau calcul (`make data`), mettre ce paquet à jour puis pousser :
+
+```bash
+python -m src.pipeline publier      # ou : make publier
+git add data/published && git commit -m "Mise à jour des données publiées" && git push
+```
+
+### Avant un rendez-vous : vérifier que l'application est éveillée
+
+Une application Streamlit gratuite se met en veille après une période sans visite ; le
+premier visiteur voit alors « This app has gone to sleep » et doit attendre son réveil
+(une à deux minutes).
+
+- **Réveil automatique** : le workflow GitHub Actions `Réveil du dashboard`
+  (`.github/workflows/reveil-app.yml`) visite l'application chaque matin et clique sur le
+  bouton de réveil si besoin. À activer une fois : GitHub → Settings → Secrets and variables
+  → Actions → Variables → `STREAMLIT_APP_URL` = adresse de l'application.
+- **Le jour J** : ouvrir l'application une heure avant (ou lancer le workflow à la main :
+  onglet Actions → « Réveil du dashboard » → Run workflow) et parcourir la carte une fois,
+  pour que les données soient déjà chargées en mémoire.
+- GitHub suspend les workflows planifiés d'un dépôt public sans activité pendant 60 jours :
+  un simple commit, ou un clic sur « Enable workflow », les relance.
+
+Déploiement : sur https://share.streamlit.io, « Create app » → dépôt `ThierryRossignol/cartographie-oxfam`,
+branche voulue, fichier principal `app/app.py`, Python 3.12 dans « Advanced settings ».
+Les dépendances en ligne sont celles de `app/requirements.txt` (allégées).
+
+## Le dashboard
+
+| Page | Contenu |
+|---|---|
+| Accueil | Chiffres clés, plus grandes communes prioritaires |
+| Carte | IBM ou IED commune par commune, filtre par département et « communes prioritaires », fiche au survol |
+| Classement | Tri, filtres (département, taille, classe d'IED), recherche, export CSV pour Excel, comparaison de communes |
+| Fiche territoire | Une commune en détail : composantes, données comparées au département et à la métropole, vote, voisines |
+| Méthodologie | Formules (lues dans `config/`), sources, choix et limites |
+
+Une fiche se partage par son adresse : `http://localhost:8501/fiche?commune=62498` (code INSEE).
+Le dashboard n'appelle aucun service externe (pas de fond de carte tiers).
+
+Fichiers produits :
+
+| Fichier | Contenu |
+|---|---|
+| `data/interim/abstention_communes.csv` | Taux d'abstention A2022, A2017, A2024 par commune |
+| `data/interim/rn_communes.csv` | Score du RN 2022 et progression depuis 2017 par commune |
+| `data/interim/socio_communes.csv` | P, R, C, SD, Y par commune (source INSEE) |
+| `data/processed/ibm_communes.csv` | Table fusionnée + PC, D, V, J, IBM, IED |
+| `data/outputs/carte_ibm.png`, `carte_ied.png` | Cartes de France en quintiles |
+| `data/outputs/carte_prioritaires.png` | Les 20 % de communes à l'IBM le plus élevé, selon leur IED |
+| `data/outputs/carte_interactive.html` | Carte à ouvrir dans un navigateur : bascule IBM / IED, filtre « prioritaires », fiche au survol |
+| `data/outputs/communes_indicateurs.geojson` | Contours + indicateurs, pour le dashboard |
+
+Relire avec `pd.read_csv(..., dtype={"code_commune": str})` pour garder les zéros des codes INSEE.
+
+Réglages (dossier `config/`) :
+
+- `weights.yaml` : pondérations des indicateurs ;
+- `elections.yaml` : scrutins utilisés pour l'abstention ;
+- `sources.yaml` : adresses des fichiers téléchargés (millésimes, contours) ;
+- `perimetre.yaml` : territoires exclus ;
+- `normalisation.yaml` : écrêtage des valeurs extrêmes.
+
+---
+
+# Choix méthodologiques
+
+| Variable | Source | Définition |
+|---|---|---|
+| A2022, A2017, A2024 | Ministère de l'Intérieur via data.gouv.fr | Abstentions / inscrits, 1er tour (présidentielles 2022 et 2017, législatives 2024) |
+| P | INSEE Filosofi 2023 | Taux de pauvreté au seuil de 60 % |
+| R | INSEE Filosofi 2023 | Niveau de vie médian (inversé : faible revenu = besoin fort) |
+| C | INSEE Recensement 2023 | Chômeurs / actifs de 15-64 ans (au sens du recensement) |
+| SD | INSEE Recensement 2023 | Part des 15 ans ou plus non scolarisés sans diplôme ou avec le seul CEP |
+| Y | INSEE Recensement 2023 | Part des 19-25 ans dans la population |
+| RN | Ministère de l'Intérieur via data.gouv.fr | Score de Marine Le Pen, 1er tour de la présidentielle 2022, en % des exprimés |
+| delta_RN | Ministère de l'Intérieur via data.gouv.fr | Score 2022 − score 2017 (1er tour), en points |
+
+- **Géographie** : toutes les données sont ramenées aux communes au 1er janvier 2025 grâce à la table de passage de l'INSEE (communes fusionnées regroupées, communes scindées héritant du taux de l'ancienne commune). Paris, Lyon et Marseille sont traitées comme une seule commune.
+- **Périmètre** : France métropolitaine. Les outre-mer sont exclus : leur abstention (45 à 85 % en médiane, contre 20 % en métropole) écraserait l'échelle.
+- **Filosofi 2023** est publié dans la géographie au 1er janvier 2026 : chaque commune est rattachée à sa commune et à son intercommunalité 2026 (tables de l'INSEE) pour lire ses valeurs.
+- **Secret statistique** : le taux de pauvreté n'est publié que pour ~5 200 communes (les plus grandes) et le niveau de vie médian pour ~30 800. Pour les autres, on utilise la valeur de l'intercommunalité (colonnes `P_source` et `R_source`).
+- **Normalisation** : chaque variable est écrêtée entre le 1er et le 99e centile, puis ramenée entre 0 et 1. Les scores sont relatifs : 1 = commune au plus fort besoin de la métropole.
+- **IED** : le candidat retenu est réglable dans `config/elections.yaml` (`ied.candidats`). Les exprimés sont recalculés comme la somme des voix de tous les candidats, la colonne de la source étant parfois erronée.
+- **Communes sans IED** (25) : en plus des communes sans IBM, une vingtaine de communes dont les voix par candidat valent 0 dans le fichier agrégé de data.gouv.fr pour 2017 ou 2022 (donnée manquante à la source).
+- **Cartes** : chaque indicateur est découpé en 5 classes d'effectifs égaux (quintiles), lues comme « les 20 % de communes les plus… ». Une palette par indicateur, du clair au foncé, qui change aussi de teinte pour que les classes voisines restent distinctes (jaune → vert → bleu pour l'IBM, jaune → orange → rouge pour l'IED) ; gris pour les données manquantes. Contours IGN ADMIN EXPRESS simplifiés par Etalab (géographie 2025).
+- **Communes sans IBM** (10) : villages de la Meuse inhabités depuis 1916, îles sans intercommunalité, très petites communes.
+
+---
+
 # Philosophie du projet
 
 Le projet suit quelques principes simples.
@@ -245,7 +368,7 @@ L'objectif est qu'un utilisateur puisse lancer quelques commandes et obtenir exa
 
 # Feuille de route
 
-## Sprint 1
+## Sprint 1 ✅
 
 - Architecture du projet
 - Documentation
@@ -253,7 +376,7 @@ L'objectif est qu'un utilisateur puisse lancer quelques commandes et obtenir exa
 
 ---
 
-## Sprint 2
+## Sprint 2 ✅
 
 - Connecteur Élections
 - Téléchargement automatique
@@ -261,31 +384,31 @@ L'objectif est qu'un utilisateur puisse lancer quelques commandes et obtenir exa
 
 ---
 
-## Sprint 3
+## Sprint 3 ✅
 
 - Connecteurs INSEE
 
 ---
 
-## Sprint 4
+## Sprint 4 ✅
 
 - Fusion des données
 
 ---
 
-## Sprint 5
+## Sprint 5 ✅
 
-- Calcul de l'IBM
+- Calcul de l'IBM et de l'IED
 
 ---
 
-## Sprint 6
+## Sprint 6 ✅
 
 - Cartographie
 
 ---
 
-## Sprint 7
+## Sprint 7 ✅
 
 - Dashboard interactif
 
@@ -310,13 +433,36 @@ Bibliothèques envisagées :
 
 ---
 
-# Licence
+# Licences et crédits
 
-À définir.
+| Élément | Licence | Fichier |
+|---|---|---|
+| Code source | MIT : toute copie doit conserver la mention de l'auteur | [`LICENSE`](LICENSE) |
+| Méthodologie (indicateurs, formules, pondérations, documentation) | CC BY 4.0 : toute réutilisation doit citer l'auteur | [`LICENSE-METHODOLOGIE.md`](LICENSE-METHODOLOGIE.md) |
+| Données sources | Licence Ouverte / Open Licence 2.0 (Etalab) : citer le producteur et la date | — |
+
+**Citation suggérée** : Rossignol, T. (2026). *Observatoire de la mobilisation citoyenne — Indice de
+Besoin de Mobilisation (IBM)*. https://github.com/ThierryRossignol/cartographie-oxfam
+(GitHub propose aussi « Cite this repository », à partir de [`CITATION.cff`](CITATION.cff).)
+
+**Données utilisées**, toutes sous Licence Ouverte 2.0 :
+
+- Ministère de l'Intérieur — résultats électoraux par bureau de vote (présidentielles 2017 et 2022,
+  législatives 2024), via le jeu « Données des élections agrégées » de data.gouv.fr ;
+- INSEE — Filosofi 2023 (revenus et pauvreté, catalogue Melodi), recensement de la population 2023, Code officiel
+  géographique 2025 ;
+- IGN — ADMIN EXPRESS, contours des communes au 1er janvier 2025, simplifiés par Etalab.
+
+Les données ont été retraitées : les résultats n'engagent pas leurs producteurs. Les dates de
+téléchargement figurent dans `data/published/metadata.json` et dans la page « À propos » de
+l'application. Auteur, licences, crédits et limites y sont aussi rappelés (`config/apropos.yaml`).
 
 ---
 
 # Auteur
+
+Thierry Rossignol — [thierryrossignol8@gmail.com](mailto:thierryrossignol8@gmail.com) —
+[github.com/ThierryRossignol](https://github.com/ThierryRossignol)
 
 Projet initié dans le cadre des activités de mobilisation citoyenne d'Oxfam France.
 

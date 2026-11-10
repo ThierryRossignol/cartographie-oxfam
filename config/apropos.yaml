@@ -1,0 +1,53 @@
+# ============================================================
+# config/apropos.yaml
+# Auteur, licences et crédits affichés dans l'application
+# (page « À propos », pied de page) et rappelés dans le README.
+# ============================================================
+
+auteur:
+  nom: Thierry Rossignol
+  email: thierryrossignol8@gmail.com
+  github: https://github.com/ThierryRossignol
+
+projet:
+  titre: Observatoire de la mobilisation citoyenne
+  depot: https://github.com/ThierryRossignol/cartographie-oxfam
+  annee: 2026
+
+licences:
+  code:
+    nom: MIT
+    fichier: LICENSE
+    url: https://opensource.org/license/mit
+  methodologie:
+    nom: CC BY 4.0
+    fichier: LICENSE-METHODOLOGIE.md
+    url: https://creativecommons.org/licenses/by/4.0/deed.fr
+
+# Sources des données : toutes sous Licence Ouverte / Open Licence 2.0
+# (Etalab), qui impose de citer la source et la date de mise à jour.
+licence_donnees:
+  nom: Licence Ouverte / Open Licence 2.0 (Etalab)
+  url: https://www.etalab.gouv.fr/licence-ouverte-open-licence/
+
+sources:
+  - producteur: Ministère de l'Intérieur
+    donnees: Résultats électoraux par bureau de vote (présidentielles 2017 et 2022, législatives 2024), via le jeu « Données des élections agrégées » de data.gouv.fr
+    millesime: Scrutins 2017 à 2024
+    url: https://www.data.gouv.fr/fr/datasets/donnees-des-elections-agregees/
+  - producteur: INSEE
+    donnees: Filosofi — revenus et pauvreté des ménages (base communale), via le catalogue Melodi
+    millesime: Revenus 2023, géographie 2026
+    url: https://catalogue-donnees.insee.fr/fr/catalogue/recherche/DS_FILOSOFI_CC
+  - producteur: INSEE
+    donnees: Recensement de la population — âge, diplômes, emploi et chômage
+    millesime: Recensement 2023 (enquêtes 2021 à 2025)
+    url: https://www.insee.fr/fr/statistiques/9006414
+  - producteur: INSEE
+    donnees: Code officiel géographique — table de passage et appartenance des communes
+    millesime: Géographie au 1er janvier 2025
+    url: https://www.insee.fr/fr/information/7671867
+  - producteur: IGN, mis en forme par Etalab
+    donnees: ADMIN EXPRESS — contours des communes (simplifiés pour la cartographie)
+    millesime: Géographie au 1er janvier 2025
+    url: https://etalab-datasets.geo.data.gouv.fr/contours-administratifs/2025/

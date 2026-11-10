@@ -1,0 +1,49 @@
+# Garde le dashboard en ligne éveillé : Streamlit Community Cloud met en
+# veille les applications sans visite. Ce workflow les visite chaque jour.
+#
+# À configurer une fois : GitHub → Settings → Secrets and variables →
+# Actions → onglet « Variables » → New repository variable :
+#   STREAMLIT_APP_URL = https://<mon-app>.streamlit.app
+# Sans cette variable, le workflow ne fait rien.
+#
+# Lancement manuel possible (avant un rendez-vous) : onglet Actions →
+# « Réveil du dashboard » → Run workflow.
+
+name: Réveil du dashboard
+
+on:
+  schedule:
+    - cron: "17 5 * * *"   # tous les jours vers 6 h 17 (heure de Paris en hiver)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reveil:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APP_URL: ${{ vars.STREAMLIT_APP_URL }}
+    steps:
+      - name: Vérifier la configuration
+        id: config
+        run: |
+          if [ -z "$APP_URL" ]; then
+            echo "Variable STREAMLIT_APP_URL non définie : rien à faire."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.config.outputs.skip != 'true'
+      - uses: actions/setup-python@v5
+        if: steps.config.outputs.skip != 'true'
+        with:
+          python-version: "3.12"
+      - name: Installer Playwright
+        if: steps.config.outputs.skip != 'true'
+        run: |
+          pip install playwright==1.65.0
+          python -m playwright install --with-deps chromium
+      - name: Réveiller l'application
+        if: steps.config.outputs.skip != 'true'
+        run: python .github/scripts/reveil_app.py "$APP_URL"

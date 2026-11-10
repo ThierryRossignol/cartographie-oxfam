@@ -1,0 +1,55 @@
+# ============================================================
+# config/sources.yaml
+# Adresses des fichiers téléchargés dans data/raw/.
+#
+# Pour passer à un millésime plus récent, il suffit de changer l'URL
+# (puis de supprimer l'ancien fichier de data/raw/ ou d'utiliser
+# download(force=True)).
+# ============================================================
+
+# Géographie de référence : toutes les communes sont ramenées
+# au Code officiel géographique (COG) de cette année.
+cog_annee: 2025
+# Géographie des données Filosofi (voir insee.filosofi ci-dessous).
+filosofi_geo_annee: 2026
+
+elections:
+  # Données des élections agrégées (data.gouv.fr) — résultats généraux, Parquet
+  resultats_generaux: https://www.data.gouv.fr/api/1/datasets/r/ff16d511-10c0-405e-9b35-511723948fce
+  # Résultats par candidat, Parquet (~160 Mo)
+  resultats_candidats: https://www.data.gouv.fr/api/1/datasets/r/4d3b35f6-0b22-4415-a24c-419a676312e2
+
+insee:
+  # Filosofi 2023 (revenus 2023), base communale, géographie au 1er janvier
+  # 2026 — catalogue Melodi de l'INSEE (accès public, sans clé).
+  # L'adresse ne contient pas d'extension : le nom du fichier local est donné.
+  filosofi:
+    url: https://api.insee.fr/melodi/file/DS_FILOSOFI_CC/DS_FILOSOFI_CC_2023_CSV_FR
+    fichier: DS_FILOSOFI_CC_2023_CSV_FR.zip
+  # Géographie de Filosofi (2026), différente de celle du projet (2025) :
+  # tables pour rattacher chaque commune à sa commune et son EPCI 2026.
+  table_passage_filosofi: https://www.insee.fr/fr/statistiques/fichier/7671867/table_passage_geo2003_geo2026.zip
+  appartenance_filosofi: https://www.insee.fr/fr/statistiques/fichier/7671844/table-appartenance-geo-communes-2026.zip
+
+  # Recensement 2023 — population par âge détaillé (une ligne par année d'âge)
+  population_age: https://www.insee.fr/fr/statistiques/fichier/9006235/DS_RP_TD_POPULATION_AGESEX_PRINC_2023.parquet
+
+  # Recensement 2023 — diplôme le plus élevé, population non scolarisée de 15 ans ou plus
+  diplomes: https://www.insee.fr/fr/statistiques/fichier/9006527/DS_RP_DIPLOMES_PRINC_2023.parquet
+
+  # Recensement 2023 — activité, emploi et chômage (lieu de résidence)
+  emploi: https://www.insee.fr/fr/statistiques/fichier/9002680/DS_RP_EMPLOI_LR_PRINC_2023.parquet
+
+  # Table de passage : tout code commune ayant existé depuis 2003 → code 2025
+  table_passage: https://www.insee.fr/fr/statistiques/fichier/7671867/table_passage_geo2003_geo2025.zip
+
+  # Table d'appartenance géographique : commune → département, EPCI, etc.
+  appartenance: https://www.insee.fr/fr/statistiques/fichier/7671844/table-appartenance-geo-communes-2025.zip
+
+ign:
+  # Contours des communes (limites IGN ADMIN EXPRESS, simplifiées par
+  # Etalab pour la cartographie), géographie au 1er janvier 2025.
+  # Deux niveaux de simplification : 1000 m (cartes France entière, carte
+  # interactive) et 100 m (cartes locales, plus précises mais plus lourdes).
+  communes_1000m: https://etalab-datasets.geo.data.gouv.fr/contours-administratifs/2025/geojson/communes-1000m-2025-01-08.geojson.gz
+  communes_100m: https://etalab-datasets.geo.data.gouv.fr/contours-administratifs/2025/geojson/communes-100m-2025-01-08.geojson.gz

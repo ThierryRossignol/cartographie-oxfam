@@ -23,3 +23,10 @@ Thumbs.db
 
 # macOS
 .DS_Store
+# Données intermédiaires générées par le pipeline
+data/interim/*
+!data/interim/.gitkeep
+
+# Cartes et exports générés (make cartes)
+data/outputs/*
+!data/outputs/.gitkeep
